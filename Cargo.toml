@@ -1,0 +1,6 @@
+[package]
+name = "logram"
+version = "0.1.0"
+authors = ["Maxim Lis <ralvke@gmail.com>"]
+
+[dependencies]
