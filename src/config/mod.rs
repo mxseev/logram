@@ -8,7 +8,12 @@ pub use self::error::ConfigError;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub some: i32,
+    pub telegram: TelegramConfig,
+}
+#[derive(Debug, Deserialize)]
+pub struct TelegramConfig {
+    pub token: String,
+    pub chat: String,
 }
 impl Config {
     pub fn read() -> Result<Config, ConfigError> {

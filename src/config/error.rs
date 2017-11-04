@@ -12,7 +12,7 @@ pub enum ConfigError {
 impl fmt::Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let cause = match self.cause() {
-            Some(e) => format!(" ({})", e.description()),
+            Some(e) => format!(" ({})", e),
             None => String::new(),
         };
         write!(f, "{}{}", self.description(), &cause)
