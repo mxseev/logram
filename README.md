@@ -4,14 +4,12 @@
 1. Install Rust via [Rustup](https://rustup.rs/)
 2. Install logram: `cargo install logram`
 3. Create bot
-3. Write config without `telegram.chat`
-4. Get chat id and put it to config
-4. Run `logram <path to config>`
-
-## Getting chat id
-* For regular chat: send any message to bot - bot will respond chat id
-* For group chat: add bot to group - bot will respond chat id to group
-* For channel: forward any message from channel to bot - bot will respond chat id (dont forget add bot to channel's admins)
+4. Run logram in echoID mode: `logram echoID <bot token>` and get needed chat ids:
+  * For regular chat: send any message to bot
+  * For group chat: add bot to group
+  * For channel: forward any message from channel to bot (dont forget add bot to channel's admins)
+4. Write config from example
+5. Run in normal mode `logram <path to config>`
 
 ## Config example
 ```yaml

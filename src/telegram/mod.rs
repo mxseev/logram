@@ -1,4 +1,4 @@
-use reqwest::{Client, ClientBuilder};
+use reqwest::{self, Client};
 use url::Url;
 use serde_json;
 
@@ -28,29 +28,29 @@ pub struct TelegramMessage {
 #[derive(Debug, Deserialize)]
 pub struct Update {
     update_id: i64,
-    message: Option<TelegramMessage>,
+    message: TelegramMessage,
 }
 pub type SendMessageResponse = Response<TelegramMessage>;
 pub type UpdatesResponse = Response<Vec<Update>>;
 
+
+#[derive(Clone)]
 pub struct Telegram {
     client: Client,
     base_url: Url,
     default_chat: String,
-    last_update: Option<i64>,
 }
 impl Telegram {
     pub fn new(config: TelegramConfig) -> Result<Telegram, TelegramError> {
         let url = format!("https://api.telegram.org/bot{}/", config.token);
 
         Ok(Telegram {
-            client: ClientBuilder::new().timeout(None).build()?,
+            client: Client::new(),
             base_url: Url::parse(&url)?,
             default_chat: config.chat,
-            last_update: None,
         })
     }
-    pub fn send(&mut self, message: Message) -> Result<(), TelegramError> {
+    pub fn send(&self, message: Message) -> Result<(), TelegramError> {
         let text = message.body.to_string();
         let chat_id = match message.chat_id {
             Some(id) => id.to_string(),
@@ -70,21 +70,24 @@ impl Telegram {
 
         Ok(())
     }
-    pub fn listen_updates(&mut self) -> Result<(), TelegramError> {
+    pub fn echo_id(token: String) -> Result<(), TelegramError> {
+        let base_url = Url::parse(&format!("https://api.telegram.org/bot{}/", token))?;
+        let mut last_update: Option<i64> = None;
+
         loop {
-            let mut url = self.base_url.join("getUpdates")?;
-            url.query_pairs_mut().append_pair("timeout", "60");
+            let mut url = base_url.join("getUpdates")?;
+            url.query_pairs_mut().append_pair("timeout", "10");
             url.query_pairs_mut().append_pair(
                 "allowed_updates",
                 "[\"message\"]",
             );
 
-            if let Some(last_update_id) = self.last_update {
+            if let Some(last_update_id) = last_update {
                 let offset = (last_update_id + 1).to_string();
                 url.query_pairs_mut().append_pair("offset", &offset);
             }
 
-            let response = self.client.get(url.clone()).send()?;
+            let response = reqwest::get(url.clone())?;
             let response: UpdatesResponse = serde_json::from_reader(response)?;
             if !response.ok {
                 return Err(TelegramError::Api(ApiError::from(response)));
@@ -92,22 +95,14 @@ impl Telegram {
 
             if let Some(updates) = response.result {
                 for update in updates {
-                    self.last_update = Some(update.update_id);
-                    self.on_update(&update)?;
+                    last_update = Some(update.update_id);
+                    let chat_id = match update.message.forward_from_chat {
+                        Some(ref forwarded_chat) => forwarded_chat.id,
+                        None => update.message.chat.id,
+                    };
+                    println!("[echo mode] chat id: {}", chat_id);
                 }
             }
         }
-    }
-    fn on_update(&mut self, update: &Update) -> Result<(), TelegramError> {
-        if let Some(ref message) = update.message {
-            let chat_id = match message.forward_from_chat {
-                Some(ref forwarded_chat) => forwarded_chat.id,
-                None => message.chat.id,
-            };
-            let reply = Message::new(Some(message.chat.id), MessageBody::ChatId(chat_id));
-            self.send(reply)?;
-        }
-
-        Ok(())
     }
 }

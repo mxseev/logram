@@ -2,12 +2,19 @@ use std::fmt;
 
 
 pub enum MessageBody {
-    ChatId(i64),
+    Error { content: String },
+    FileWrited { path: String, content: String },
 }
 impl fmt::Display for MessageBody {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let message = match *self {
-            MessageBody::ChatId(id) => format!("Chat ID: `{}`", id),
+            MessageBody::Error { ref content } => {
+                format!("Internal error: `{}`\nLogram stopped", content)
+            }
+            MessageBody::FileWrited {
+                ref path,
+                ref content,
+            } => format!("*{}*\n`{}`", path, content),
         };
         write!(f, "{}", message)
     }
@@ -16,9 +23,4 @@ impl fmt::Display for MessageBody {
 pub struct Message {
     pub chat_id: Option<i64>,
     pub body: MessageBody,
-}
-impl Message {
-    pub fn new(chat_id: Option<i64>, body: MessageBody) -> Message {
-        Message { chat_id, body }
-    }
 }

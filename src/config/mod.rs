@@ -9,11 +9,20 @@ pub use self::error::ConfigError;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub telegram: TelegramConfig,
+    pub watcher: WatcherConfig,
 }
 #[derive(Debug, Deserialize)]
 pub struct TelegramConfig {
     pub token: String,
     pub chat: String,
+}
+#[derive(Debug, Deserialize)]
+pub struct WatcherConfig {
+    pub files: Vec<FileConfig>,
+}
+#[derive(Debug, Deserialize)]
+pub struct FileConfig {
+    pub path: String,
 }
 impl Config {
     pub fn read() -> Result<Config, ConfigError> {
