@@ -5,9 +5,9 @@
 2. Install logram: `cargo install logram`
 3. Create bot
 4. Run logram in echoID mode: `logram echoID <bot token>` and get needed chat ids:
-  * For regular chat: send any message to bot
-  * For group chat: add bot to group
-  * For channel: forward any message from channel to bot (dont forget add bot to channel admins)
+    * For regular chat: send any message to bot
+    * For group chat: add bot to group
+    * For channel: forward any message from channel to bot (dont forget add bot to channel admins)
 4. Write config from example
 5. Run in normal mode `logram <path to config>`
 
