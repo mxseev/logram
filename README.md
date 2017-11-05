@@ -32,7 +32,7 @@ watcher:
 ```
 
  ## Systemd service
- 1. Create link: `ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
+ 1. Create link: `sudo ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
  2. Copy config to `/etc/logram.yaml`
  3. Copy `logram.service` to `/etc/systemd/system`
  4. Reload services: `systemctl daemon-reload`
