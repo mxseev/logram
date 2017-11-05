@@ -44,7 +44,7 @@ impl FileWatcher {
     }
     pub fn watch_files(&mut self) -> Result<(), WatcherError> {
         let channel = mpsc::channel();
-        let mut watcher: RecommendedWatcher = Watcher::new(channel.0, Duration::from_secs(2))?;
+        let mut watcher: RecommendedWatcher = Watcher::new(channel.0, Duration::from_secs(1))?;
         for path in self.files.keys() {
             watcher.watch(&path, RecursiveMode::NonRecursive)?;
         }
@@ -53,6 +53,7 @@ impl FileWatcher {
             let event = channel.1.recv()?;
             match event {
                 DebouncedEvent::Write(path) => self.on_file_writed(path)?,
+                DebouncedEvent::Remove(path) => self.on_file_removed(path)?,
                 _ => {}
             }
         }
@@ -89,6 +90,15 @@ impl FileWatcher {
             Some(file) => file.seek += new_content_len as u64,
             None => return Err(WatcherError::FileNotFound),
         };
+
+        Ok(())
+    }
+    fn on_file_removed(&self, path: PathBuf) -> Result<(), WatcherError> {
+        let message = Message {
+            chat_id: None,
+            body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
+        };
+        self.telegram.send(message)?;
 
         Ok(())
     }
