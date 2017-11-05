@@ -21,4 +21,5 @@ watcher:
   files: # watching files (logs)
     - path: /var/log/awesome.log # path to file
       chat: 12345678 # custom chat for this file (optional)
+      regex: critical # push updates only which matches that regex (optional) (more info: doc.rust-lang.org/regex)
 ```

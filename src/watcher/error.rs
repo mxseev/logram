@@ -3,6 +3,7 @@ use std::error::Error;
 use std::io;
 use std::sync::mpsc;
 use notify;
+use regex;
 
 use telegram::TelegramError;
 
@@ -15,6 +16,7 @@ pub enum WatcherError {
     Notify(notify::Error),
     Recv(mpsc::RecvError),
     Telegram(TelegramError),
+    Regex(regex::Error),
 }
 impl fmt::Display for WatcherError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -34,6 +36,7 @@ impl Error for WatcherError {
             WatcherError::Notify(_) => "FS watcher error",
             WatcherError::Recv(_) => "FS watcher channel error",
             WatcherError::Telegram(_) => "Telegram error",
+            WatcherError::Regex(_) => "Regex error",
         }
     }
     fn cause(&self) -> Option<&Error> {
@@ -44,6 +47,7 @@ impl Error for WatcherError {
             &WatcherError::Notify(ref e) => Some(e),
             &WatcherError::Recv(ref e) => Some(e),
             &WatcherError::Telegram(ref e) => Some(e),
+            &WatcherError::Regex(ref e) => Some(e),
         }
     }
 }
@@ -66,5 +70,10 @@ impl From<mpsc::RecvError> for WatcherError {
 impl From<TelegramError> for WatcherError {
     fn from(e: TelegramError) -> Self {
         WatcherError::Telegram(e)
+    }
+}
+impl From<regex::Error> for WatcherError {
+    fn from(e: regex::Error) -> Self {
+        WatcherError::Regex(e)
     }
 }

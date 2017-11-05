@@ -5,6 +5,7 @@ use std::fs::{self, File};
 use std::sync::mpsc::{self, Receiver};
 use std::time::Duration;
 use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
+use regex::Regex;
 
 use telegram::{Telegram, Message, MessageBody};
 use config::WatcherConfig;
@@ -16,6 +17,7 @@ pub use self::error::WatcherError;
 struct WatchingFile {
     seek: u64,
     chat: Option<i64>,
+    regex: Option<Regex>,
 }
 
 pub struct FileWatcher {
@@ -40,11 +42,18 @@ impl FileWatcher {
             if meta.is_dir() {
                 return Err(WatcherError::DirsNotSupported);
             }
+
+            let regex = match file.regex {
+                Some(regex) => Some(Regex::new(&regex)?),
+                None => None,
+            };
+
             watcher.files.insert(
                 path,
                 WatchingFile {
                     seek: meta.len(),
                     chat: file.chat,
+                    regex: regex,
                 },
             );
         }
@@ -83,6 +92,12 @@ impl FileWatcher {
             let new_content = String::from_utf8_lossy(&buffer);
             if new_content == String::new() {
                 return Ok(());
+            }
+
+            if let Some(ref regex) = watching_file.regex {
+                if !regex.is_match(&new_content) {
+                    return Ok(());
+                }
             }
 
             let message = Message {

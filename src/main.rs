@@ -6,6 +6,7 @@ extern crate serde_json;
 extern crate reqwest;
 extern crate url;
 extern crate notify;
+extern crate regex;
 
 use std::{process, env};
 

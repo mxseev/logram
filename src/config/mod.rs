@@ -24,6 +24,7 @@ pub struct WatcherConfig {
 pub struct FileConfig {
     pub path: String,
     pub chat: Option<i64>,
+    pub regex: Option<String>,
 }
 impl Config {
     pub fn read() -> Result<Config, ConfigError> {
