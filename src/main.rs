@@ -40,7 +40,7 @@ fn init() -> Result<(), InitError> {
         Ok(_) => Ok(()),
         Err(e) => {
             let message = Message {
-                chat_id: None,
+                chat: None,
                 body: MessageBody::Error { content: format!("{}", e) },
             };
             telegram.send(message)?;

@@ -14,7 +14,7 @@ pub struct Config {
 #[derive(Debug, Deserialize)]
 pub struct TelegramConfig {
     pub token: String,
-    pub chat: String,
+    pub chat: i64,
 }
 #[derive(Debug, Deserialize)]
 pub struct WatcherConfig {
@@ -23,6 +23,7 @@ pub struct WatcherConfig {
 #[derive(Debug, Deserialize)]
 pub struct FileConfig {
     pub path: String,
+    pub chat: Option<i64>,
 }
 impl Config {
     pub fn read() -> Result<Config, ConfigError> {

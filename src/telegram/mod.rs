@@ -38,7 +38,7 @@ pub type UpdatesResponse = Response<Vec<Update>>;
 pub struct Telegram {
     client: Client,
     base_url: Url,
-    default_chat: String,
+    default_chat: i64,
 }
 impl Telegram {
     pub fn new(config: TelegramConfig) -> Result<Telegram, TelegramError> {
@@ -52,9 +52,9 @@ impl Telegram {
     }
     pub fn send(&self, message: Message) -> Result<(), TelegramError> {
         let text = message.body.to_string();
-        let chat_id = match message.chat_id {
+        let chat_id = match message.chat {
             Some(id) => id.to_string(),
-            None => self.default_chat.clone(),
+            None => self.default_chat.clone().to_string(),
         };
 
         let mut url = self.base_url.join("sendMessage")?;

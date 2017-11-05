@@ -20,4 +20,5 @@ telegram:
 watcher:
   files: # watching files (logs)
     - path: /var/log/awesome.log # path to file
+      chat: 12345678 # custom chat for this file (optional)
 ```

@@ -23,6 +23,6 @@ impl fmt::Display for MessageBody {
 }
 
 pub struct Message {
-    pub chat_id: Option<i64>,
+    pub chat: Option<i64>,
     pub body: MessageBody,
 }

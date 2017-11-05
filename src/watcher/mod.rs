@@ -15,6 +15,7 @@ pub use self::error::WatcherError;
 
 struct WatchingFile {
     seek: u64,
+    chat: Option<i64>,
 }
 
 pub struct FileWatcher {
@@ -41,7 +42,10 @@ impl FileWatcher {
             }
             watcher.files.insert(
                 path,
-                WatchingFile { seek: meta.len() },
+                WatchingFile {
+                    seek: meta.len(),
+                    chat: file.chat,
+                },
             );
         }
 
@@ -63,83 +67,71 @@ impl FileWatcher {
         }
     }
     fn on_file_writed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        let old_len = match self.files.get(&path) {
-            Some(file) => file.seek,
-            None => return Ok(()),
-        };
+        if let Some(watching_file) = self.files.get_mut(&path) {
+            let old_len = watching_file.seek;
+            let new_len = fs::metadata(path.clone())?.len();
+            let seek = if new_len > old_len {
+                SeekFrom::Start(old_len)
+            } else {
+                SeekFrom::Start(0)
+            };
 
-        let new_len = fs::metadata(path.clone())?.len();
-        let seek = if new_len > old_len {
-            SeekFrom::Start(old_len)
-        } else {
-            SeekFrom::Start(0)
-        };
+            let mut file = File::open(path.clone())?;
+            let mut buffer = Vec::new();
+            file.seek(seek)?;
+            let new_content_len = file.read_to_end(&mut buffer)?;
+            let new_content = String::from_utf8_lossy(&buffer);
+            if new_content == String::new() {
+                return Ok(());
+            }
 
-        let mut file = File::open(path.clone())?;
-        let mut buffer = Vec::new();
-        file.seek(seek)?;
-        let new_content_len = file.read_to_end(&mut buffer)?;
-        let new_content = String::from_utf8_lossy(&buffer);
-        if new_content == String::new() {
-            return Ok(());
+            let message = Message {
+                chat: watching_file.chat,
+                body: MessageBody::FileWrited {
+                    path: format!("{}", path.display()),
+                    content: format!("{}", new_content),
+                },
+            };
+            self.telegram.send(message)?;
+            watching_file.seek += new_content_len as u64
         }
-
-        let message = Message {
-            chat_id: None,
-            body: MessageBody::FileWrited {
-                path: format!("{}", path.display()),
-                content: format!("{}", new_content),
-            },
-        };
-        self.telegram.send(message)?;
-
-        match self.files.get_mut(&path) {
-            Some(file) => file.seek += new_content_len as u64,
-            None => return Ok(()),
-        };
 
         Ok(())
     }
     fn on_file_removed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        match self.files.get_mut(&path) {
-            Some(file) => file.seek = 0,
-            None => return Ok(()),
-        };
+        if let Some(watching_file) = self.files.get_mut(&path) {
+            let message = Message {
+                chat: watching_file.chat,
+                body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
+            };
+            self.telegram.send(message)?;
 
-        let message = Message {
-            chat_id: None,
-            body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
+            let path_clone = path.clone();
+            let parent_dir = match path_clone.parent() {
+                Some(parent) => parent,
+                None => return Err(WatcherError::ParentDirNotFound),
+            };
+            self.watcher.watch(&parent_dir, RecursiveMode::NonRecursive)?;
         };
-        self.telegram.send(message)?;
-
-        let path_clone = path.clone();
-        let parent_dir = match path_clone.parent() {
-            Some(parent) => parent,
-            None => return Err(WatcherError::ParentDirNotFound),
-        };
-        self.watcher.watch(&parent_dir, RecursiveMode::NonRecursive)?;
 
         Ok(())
     }
     fn on_file_created(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        if let None = self.files.get(&path) {
-            return Ok(());
+        if let Some(watching_file) = self.files.get(&path) {
+            let message = Message {
+                chat: watching_file.chat,
+                body: MessageBody::FileCreated { path: format!("{}", path.display()) },
+            };
+            self.telegram.send(message)?;
+
+            let path_clone = path.clone();
+            let parent_dir = match path_clone.parent() {
+                Some(parent) => parent,
+                None => return Err(WatcherError::ParentDirNotFound),
+            };
+            self.watcher.unwatch(&parent_dir)?;
+            self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
         }
-
-        let message = Message {
-            chat_id: None,
-            body: MessageBody::FileCreated { path: format!("{}", path.display()) },
-        };
-        self.telegram.send(message)?;
-
-        let path_clone = path.clone();
-        let parent_dir = match path_clone.parent() {
-            Some(parent) => parent,
-            None => return Err(WatcherError::ParentDirNotFound),
-        };
-        self.watcher.unwatch(&parent_dir)?;
-        self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
-
         self.on_file_writed(path)?;
 
         Ok(())
