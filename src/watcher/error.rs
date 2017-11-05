@@ -11,7 +11,7 @@ use telegram::TelegramError;
 pub enum WatcherError {
     Io(io::Error),
     DirsNotSupported,
-    FileNotFound,
+    ParentDirNotFound,
     Notify(notify::Error),
     Recv(mpsc::RecvError),
     Telegram(TelegramError),
@@ -30,7 +30,7 @@ impl Error for WatcherError {
         match *self {
             WatcherError::Io(_) => "Could not read file",
             WatcherError::DirsNotSupported => "Only files watching supported",
-            WatcherError::FileNotFound => "File not found",
+            WatcherError::ParentDirNotFound => "Parent dir not found",
             WatcherError::Notify(_) => "FS watcher error",
             WatcherError::Recv(_) => "FS watcher channel error",
             WatcherError::Telegram(_) => "Telegram error",
@@ -40,7 +40,7 @@ impl Error for WatcherError {
         match self {
             &WatcherError::Io(ref e) => Some(e),
             &WatcherError::DirsNotSupported => None,
-            &WatcherError::FileNotFound => None,
+            &WatcherError::ParentDirNotFound => None,
             &WatcherError::Notify(ref e) => Some(e),
             &WatcherError::Recv(ref e) => Some(e),
             &WatcherError::Telegram(ref e) => Some(e),

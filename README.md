@@ -16,4 +16,8 @@
 telegram:
   token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 # bot token
   chat: 12345678 # default chat
+
+watcher:
+  files: # watching files (logs)
+    - path: /var/log/awesome.log # path to file
 ```

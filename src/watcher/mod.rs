@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::io::{Read, Seek, SeekFrom};
 use std::fs::{self, File};
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Receiver};
 use std::time::Duration;
 use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
 
@@ -20,12 +20,17 @@ struct WatchingFile {
 pub struct FileWatcher {
     telegram: Telegram,
     files: HashMap<PathBuf, WatchingFile>,
+    watcher: RecommendedWatcher,
+    watcher_receiver: Receiver<DebouncedEvent>,
 }
 impl FileWatcher {
     pub fn new(config: WatcherConfig, telegram: Telegram) -> Result<FileWatcher, WatcherError> {
+        let chan = mpsc::channel();
         let mut watcher = FileWatcher {
             telegram,
             files: HashMap::new(),
+            watcher: Watcher::new(chan.0, Duration::from_secs(1))?,
+            watcher_receiver: chan.1,
         };
 
         for file in config.files {
@@ -43,15 +48,14 @@ impl FileWatcher {
         Ok(watcher)
     }
     pub fn watch_files(&mut self) -> Result<(), WatcherError> {
-        let channel = mpsc::channel();
-        let mut watcher: RecommendedWatcher = Watcher::new(channel.0, Duration::from_secs(1))?;
         for path in self.files.keys() {
-            watcher.watch(&path, RecursiveMode::NonRecursive)?;
+            self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
         }
 
         loop {
-            let event = channel.1.recv()?;
+            let event = self.watcher_receiver.recv()?;
             match event {
+                DebouncedEvent::Create(path) => self.on_file_created(path)?,
                 DebouncedEvent::Write(path) => self.on_file_writed(path)?,
                 DebouncedEvent::Remove(path) => self.on_file_removed(path)?,
                 _ => {}
@@ -61,7 +65,7 @@ impl FileWatcher {
     fn on_file_writed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
         let old_len = match self.files.get(&path) {
             Some(file) => file.seek,
-            None => return Err(WatcherError::FileNotFound),
+            None => return Ok(()),
         };
 
         let new_len = fs::metadata(path.clone())?.len();
@@ -76,6 +80,9 @@ impl FileWatcher {
         file.seek(seek)?;
         let new_content_len = file.read_to_end(&mut buffer)?;
         let new_content = String::from_utf8_lossy(&buffer);
+        if new_content == String::new() {
+            return Ok(());
+        }
 
         let message = Message {
             chat_id: None,
@@ -88,17 +95,52 @@ impl FileWatcher {
 
         match self.files.get_mut(&path) {
             Some(file) => file.seek += new_content_len as u64,
-            None => return Err(WatcherError::FileNotFound),
+            None => return Ok(()),
         };
 
         Ok(())
     }
-    fn on_file_removed(&self, path: PathBuf) -> Result<(), WatcherError> {
+    fn on_file_removed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
+        match self.files.get_mut(&path) {
+            Some(file) => file.seek = 0,
+            None => return Ok(()),
+        };
+
         let message = Message {
             chat_id: None,
             body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
         };
         self.telegram.send(message)?;
+
+        let path_clone = path.clone();
+        let parent_dir = match path_clone.parent() {
+            Some(parent) => parent,
+            None => return Err(WatcherError::ParentDirNotFound),
+        };
+        self.watcher.watch(&parent_dir, RecursiveMode::NonRecursive)?;
+
+        Ok(())
+    }
+    fn on_file_created(&mut self, path: PathBuf) -> Result<(), WatcherError> {
+        if let None = self.files.get(&path) {
+            return Ok(());
+        }
+
+        let message = Message {
+            chat_id: None,
+            body: MessageBody::FileCreated { path: format!("{}", path.display()) },
+        };
+        self.telegram.send(message)?;
+
+        let path_clone = path.clone();
+        let parent_dir = match path_clone.parent() {
+            Some(parent) => parent,
+            None => return Err(WatcherError::ParentDirNotFound),
+        };
+        self.watcher.unwatch(&parent_dir)?;
+        self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
+
+        self.on_file_writed(path)?;
 
         Ok(())
     }
