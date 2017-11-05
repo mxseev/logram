@@ -40,14 +40,14 @@ impl Error for WatcherError {
         }
     }
     fn cause(&self) -> Option<&Error> {
-        match self {
-            &WatcherError::Io(ref e) => Some(e),
-            &WatcherError::DirsNotSupported => None,
-            &WatcherError::ParentDirNotFound => None,
-            &WatcherError::Notify(ref e) => Some(e),
-            &WatcherError::Recv(ref e) => Some(e),
-            &WatcherError::Telegram(ref e) => Some(e),
-            &WatcherError::Regex(ref e) => Some(e),
+        match *self {
+            WatcherError::Io(ref e) => Some(e),
+            WatcherError::DirsNotSupported => None,
+            WatcherError::ParentDirNotFound => None,
+            WatcherError::Notify(ref e) => Some(e),
+            WatcherError::Recv(ref e) => Some(e),
+            WatcherError::Telegram(ref e) => Some(e),
+            WatcherError::Regex(ref e) => Some(e),
         }
     }
 }

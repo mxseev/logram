@@ -21,33 +21,32 @@ use watcher::FileWatcher;
 
 
 fn init() -> Result<(), InitError> {
-    if let Some(first_arg) = env::args().nth(1) {
-        if first_arg == String::from("echoID") {
-            if let Some(token) = env::args().nth(2) {
-                println!("Running in echoID mode, chat ids will be printed here");
-                Telegram::echo_id(token)?;
-            } else {
+    if env::args().nth(1) == Some("echoID".to_string()) {
+        let token = match env::args().nth(2) {
+            Some(token) => token,
+            None => {
                 println!("Usage: logram echoID <bot token>");
-                process::exit(1);
+                process::exit(1)
             }
-        }
+        };
+        println!("Running in echoID mode, chat ids will be printed here..");
+        Telegram::echo_id(token)?;
     }
 
     let config = Config::read()?;
     let telegram = Telegram::new(config.telegram)?;
     let mut watcher = FileWatcher::new(config.watcher, telegram.clone())?;
 
-    match watcher.watch_files() {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            let message = Message {
-                chat: None,
-                body: MessageBody::Error { content: format!("{}", e) },
-            };
-            telegram.send(message)?;
-            Err(InitError::from(e))
-        }
+    if let Err(e) = watcher.watch_files() {
+        let message = Message {
+            chat: None,
+            body: MessageBody::Error { content: format!("{}", e) },
+        };
+        telegram.send(message)?;
+        return Err(InitError::from(e));
     }
+
+    Ok(())
 }
 
 fn main() {

@@ -42,20 +42,17 @@ impl FileWatcher {
             if meta.is_dir() {
                 return Err(WatcherError::DirsNotSupported);
             }
-
             let regex = match file.regex {
                 Some(regex) => Some(Regex::new(&regex)?),
                 None => None,
             };
 
-            watcher.files.insert(
-                path,
-                WatchingFile {
-                    seek: meta.len(),
-                    chat: file.chat,
-                    regex: regex,
-                },
-            );
+            let watching_file = WatchingFile {
+                seek: meta.len(),
+                chat: file.chat,
+                regex: regex,
+            };
+            watcher.files.insert(path, watching_file);
         }
 
         Ok(watcher)
@@ -68,7 +65,10 @@ impl FileWatcher {
         loop {
             let event = self.watcher_receiver.recv()?;
             match event {
-                DebouncedEvent::Create(path) => self.on_file_created(path)?,
+                DebouncedEvent::Create(path) => {
+                    self.on_file_created(path.clone())?;
+                    self.on_file_writed(path)?;
+                }
                 DebouncedEvent::Write(path) => self.on_file_writed(path)?,
                 DebouncedEvent::Remove(path) => self.on_file_removed(path)?,
                 _ => {}
@@ -76,78 +76,87 @@ impl FileWatcher {
         }
     }
     fn on_file_writed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        if let Some(watching_file) = self.files.get_mut(&path) {
-            let old_len = watching_file.seek;
-            let new_len = fs::metadata(path.clone())?.len();
-            let seek = if new_len > old_len {
-                SeekFrom::Start(old_len)
-            } else {
-                SeekFrom::Start(0)
-            };
+        let watching_file = match self.files.get_mut(&path) {
+            Some(file) => file,
+            None => return Ok(()),
+        };
 
-            let mut file = File::open(path.clone())?;
-            let mut buffer = Vec::new();
-            file.seek(seek)?;
-            let new_content_len = file.read_to_end(&mut buffer)?;
-            let new_content = String::from_utf8_lossy(&buffer);
-            if new_content == String::new() {
+        let old_len = watching_file.seek;
+        let new_len = fs::metadata(path.clone())?.len();
+        let seek = if new_len > old_len {
+            SeekFrom::Start(old_len)
+        } else {
+            SeekFrom::Start(0)
+        };
+
+        let mut file = File::open(path.clone())?;
+        let mut buffer = Vec::new();
+        file.seek(seek)?;
+        let new_content_len = file.read_to_end(&mut buffer)?;
+        let new_content = String::from_utf8_lossy(&buffer);
+        if new_content == String::new() {
+            return Ok(());
+        }
+
+        if let Some(ref regex) = watching_file.regex {
+            if !regex.is_match(&new_content) {
                 return Ok(());
             }
-
-            if let Some(ref regex) = watching_file.regex {
-                if !regex.is_match(&new_content) {
-                    return Ok(());
-                }
-            }
-
-            let message = Message {
-                chat: watching_file.chat,
-                body: MessageBody::FileWrited {
-                    path: format!("{}", path.display()),
-                    content: format!("{}", new_content),
-                },
-            };
-            self.telegram.send(message)?;
-            watching_file.seek += new_content_len as u64
         }
+
+        let message = Message {
+            chat: watching_file.chat,
+            body: MessageBody::FileWrited {
+                path: format!("{}", path.display()),
+                content: format!("{}", new_content),
+            },
+        };
+        self.telegram.send(message)?;
+
+        watching_file.seek += new_content_len as u64;
 
         Ok(())
     }
     fn on_file_removed(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        if let Some(watching_file) = self.files.get_mut(&path) {
-            let message = Message {
-                chat: watching_file.chat,
-                body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
-            };
-            self.telegram.send(message)?;
-
-            let path_clone = path.clone();
-            let parent_dir = match path_clone.parent() {
-                Some(parent) => parent,
-                None => return Err(WatcherError::ParentDirNotFound),
-            };
-            self.watcher.watch(&parent_dir, RecursiveMode::NonRecursive)?;
+        let watching_file = match self.files.get_mut(&path) {
+            Some(file) => file,
+            None => return Ok(()),
         };
+
+        let path_clone = path.clone();
+        let parent_dir = match path_clone.parent() {
+            Some(parent) => parent,
+            None => return Err(WatcherError::ParentDirNotFound),
+        };
+        self.watcher.watch(&parent_dir, RecursiveMode::NonRecursive)?;
+
+        let message = Message {
+            chat: watching_file.chat,
+            body: MessageBody::FileRemoved { path: format!("{}", path.display()) },
+        };
+        self.telegram.send(message)?;
 
         Ok(())
     }
     fn on_file_created(&mut self, path: PathBuf) -> Result<(), WatcherError> {
-        if let Some(watching_file) = self.files.get(&path) {
-            let message = Message {
-                chat: watching_file.chat,
-                body: MessageBody::FileCreated { path: format!("{}", path.display()) },
-            };
-            self.telegram.send(message)?;
+        let watching_file = match self.files.get(&path) {
+            Some(file) => file,
+            None => return Ok(()),
+        };
 
-            let path_clone = path.clone();
-            let parent_dir = match path_clone.parent() {
-                Some(parent) => parent,
-                None => return Err(WatcherError::ParentDirNotFound),
-            };
-            self.watcher.unwatch(&parent_dir)?;
-            self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
-        }
-        self.on_file_writed(path)?;
+        let path_clone = path.clone();
+        let parent_dir = match path_clone.parent() {
+            Some(parent) => parent,
+            None => return Err(WatcherError::ParentDirNotFound),
+        };
+        self.watcher.unwatch(&parent_dir)?;
+        self.watcher.watch(&path, RecursiveMode::NonRecursive)?;
+
+        let message = Message {
+            chat: watching_file.chat,
+            body: MessageBody::FileCreated { path: format!("{}", path.display()) },
+        };
+        self.telegram.send(message)?;
 
         Ok(())
     }

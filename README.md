@@ -7,19 +7,26 @@
 4. Run logram in echoID mode: `logram echoID <bot token>` and get needed chat ids:
   * For regular chat: send any message to bot
   * For group chat: add bot to group
-  * For channel: forward any message from channel to bot (dont forget add bot to channel's admins)
+  * For channel: forward any message from channel to bot (dont forget add bot to channel admins)
 4. Write config from example
 5. Run in normal mode `logram <path to config>`
 
 ## Config example
 ```yaml
 telegram:
-  token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 # bot token
-  chat: 12345678 # default chat
+  # bot token
+  token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+  # default chat (for updates from files without custom chat and errors)
+  chat: 12345678 
 
 watcher:
-  files: # watching files (logs)
-    - path: /var/log/awesome.log # path to file
-      chat: 12345678 # custom chat for this file (optional)
-      regex: critical # push updates only which matches that regex (optional) (more info: doc.rust-lang.org/regex)
+  # watching files (logs)
+  files: 
+      # path to file
+    - path: /var/log/awesome.log 
+      # custom chat for this file (optional)
+      chat: 12345678 
+      # push updates only which matches that regex (optional) 
+      # (more info: doc.rust-lang.org/regex)
+      regex: critical 
 ```

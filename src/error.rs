@@ -30,10 +30,10 @@ impl Error for InitError {
         }
     }
     fn cause(&self) -> Option<&Error> {
-        match self {
-            &InitError::Config(ref e) => Some(e),
-            &InitError::Telegram(ref e) => Some(e),
-            &InitError::Watcher(ref e) => Some(e),
+        match *self {
+            InitError::Config(ref e) => Some(e),
+            InitError::Telegram(ref e) => Some(e),
+            InitError::Watcher(ref e) => Some(e),
         }
     }
 }

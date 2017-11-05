@@ -26,9 +26,9 @@ impl Error for ConfigError {
         }
     }
     fn cause(&self) -> Option<&Error> {
-        match self {
-            &ConfigError::Io(ref e) => Some(e),
-            &ConfigError::Yaml(ref e) => Some(e),
+        match *self {
+            ConfigError::Io(ref e) => Some(e),
+            ConfigError::Yaml(ref e) => Some(e),
         }
     }
 }

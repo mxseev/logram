@@ -10,13 +10,13 @@ pub enum MessageBody {
 impl fmt::Display for MessageBody {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let message = match *self {
-            MessageBody::Error { ref content } => format!("Error: `{}`\nLogram stopped", content),
-            MessageBody::FileCreated { ref path } => format!("File *{}* created.", path),
+            MessageBody::Error { ref content } => format!("Error: `{}`\nLogram stopped.", content),
+            MessageBody::FileCreated { ref path } => format!("*{}*\nFile created.", path),
             MessageBody::FileWrited {
                 ref path,
                 ref content,
             } => format!("*{}*\n`{}`", path, content),
-            MessageBody::FileRemoved { ref path } => format!("File *{}* removed.", path),
+            MessageBody::FileRemoved { ref path } => format!("*{}*\nFile removed.", path),
         };
         write!(f, "{}", message)
     }

@@ -26,6 +26,7 @@ pub struct FileConfig {
     pub chat: Option<i64>,
     pub regex: Option<String>,
 }
+
 impl Config {
     pub fn read() -> Result<Config, ConfigError> {
         let filename = match env::args().nth(1) {

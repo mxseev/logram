@@ -54,7 +54,7 @@ impl Telegram {
         let text = message.body.to_string();
         let chat_id = match message.chat {
             Some(id) => id.to_string(),
-            None => self.default_chat.clone().to_string(),
+            None => self.default_chat.to_string(),
         };
 
         let mut url = self.base_url.join("sendMessage")?;

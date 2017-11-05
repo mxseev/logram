@@ -25,19 +25,19 @@ impl fmt::Display for TelegramError {
 }
 impl Error for TelegramError {
     fn description(&self) -> &str {
-        match self {
-            &TelegramError::Url(_) => "Could not make url",
-            &TelegramError::Http(_) => "Could not make http request",
-            &TelegramError::Json(_) => "Could not (de)serialize json",
-            &TelegramError::Api(_) => "Api error",
+        match *self {
+            TelegramError::Url(_) => "Could not make url",
+            TelegramError::Http(_) => "Could not make http request",
+            TelegramError::Json(_) => "Could not (de)serialize json",
+            TelegramError::Api(_) => "Api error",
         }
     }
     fn cause(&self) -> Option<&Error> {
-        match self {
-            &TelegramError::Url(ref e) => Some(e),
-            &TelegramError::Http(ref e) => Some(e),
-            &TelegramError::Json(ref e) => Some(e),
-            &TelegramError::Api(ref e) => Some(e),
+        match *self {
+            TelegramError::Url(ref e) => Some(e),
+            TelegramError::Http(ref e) => Some(e),
+            TelegramError::Json(ref e) => Some(e),
+            TelegramError::Api(ref e) => Some(e),
         }
     }
 }
@@ -68,7 +68,10 @@ pub struct ApiError {
 }
 impl<T> From<Response<T>> for ApiError {
     fn from(e: Response<T>) -> Self {
-        ApiError { description: e.description.unwrap_or(String::from("no description")) }
+        let description = e.description.unwrap_or_else(
+            || String::from("no description"),
+        );
+        ApiError { description }
     }
 }
 
