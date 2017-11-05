@@ -35,6 +35,6 @@ watcher:
  1. Create link: `sudo ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
  2. Copy config to `/etc/logram.yaml`
  3. Copy `logram.service` to `/etc/systemd/system`
- 4. Reload services: `systemctl daemon-reload`
+ 4. Reload services: `sudo systemctl daemon-reload`
  5. Enable service: `sudo systemctl enable logram`
  6. Run service: `sudo systemctl start logram`
