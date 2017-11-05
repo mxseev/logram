@@ -8,8 +8,8 @@
     * For regular chat: send any message to bot
     * For group chat: add bot to group
     * For channel: forward any message from channel to bot (dont forget add bot to channel admins)
-4. Write config from example
-5. Run in normal mode `logram <path to config>`
+5. Write config from example
+6. Run in normal mode `logram <path to config>`
 
 ## Config example
 ```yaml
@@ -30,3 +30,11 @@ watcher:
       # (more info: doc.rust-lang.org/regex)
       regex: critical 
 ```
+
+ ## Systemd service
+ 1. Create link: `ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
+ 2. Copy config to `/etc/logram.yaml`
+ 3. Copy `logram.service` to `/etc/systemd/system`
+ 4. Reload services: `systemctl daemon-reload`
+ 5. Enable service: `sudo systemctl enable logram`
+ 6. Run service: `sudo systemctl start logram`

@@ -1,0 +1,12 @@
+[Unit]
+Description = Push log files updates to Telegram
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = /usr/bin/logram /etc/logram.yaml
+Restart = always
+RestartSec = 30
+
+[Install]
+WantedBy = multi-user.target
