@@ -1,11 +1,11 @@
 [package]
 name = "logram"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Maxim Lis <ralvke@gmail.com>"]
 description = "Push logs updates to Telegram"
 repository = "https://github.com/Ralvke/logram"
 readme = "README.md"
-keywords = ["telegram"]
+keywords = ["telegram", "bot"]
 license = "MIT"
 license-file = "LICENSE.md"
 
