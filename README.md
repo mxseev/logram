@@ -39,7 +39,7 @@ watcher:
 5. Enable service: `sudo systemctl enable logram`
 6. Run service: `sudo systemctl start logram`
 
-# Use logram as slog drain
+## Use logram as slog drain
 Logram implements `slog::Drain`, example usage:
 1. Import logram as library
 ```toml
