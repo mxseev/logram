@@ -2,6 +2,7 @@ use std::env;
 use std::fs::File;
 use serde_yaml;
 
+use telegram;
 mod error;
 pub use self::error::ConfigError;
 
@@ -15,6 +16,14 @@ pub struct Config {
 pub struct TelegramConfig {
     pub token: String,
     pub chat: i64,
+}
+impl Into<telegram::Config> for TelegramConfig {
+    fn into(self) -> telegram::Config {
+        telegram::Config {
+            token: self.token,
+            chat: self.chat,
+        }
+    }
 }
 #[derive(Debug, Deserialize)]
 pub struct WatcherConfig {

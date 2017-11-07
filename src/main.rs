@@ -34,7 +34,7 @@ fn init() -> Result<(), InitError> {
     }
 
     let config = Config::read()?;
-    let telegram = Telegram::new(config.telegram)?;
+    let telegram = Telegram::new(config.telegram.into())?;
     let mut watcher = FileWatcher::new(config.watcher, telegram.clone())?;
 
     if let Err(e) = watcher.watch_files() {

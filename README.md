@@ -31,10 +31,58 @@ watcher:
       regex: critical 
 ```
 
- ## Systemd service
- 1. Create link: `sudo ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
- 2. Copy config to `/etc/logram.yaml`
- 3. Copy `logram.service` to `/etc/systemd/system`
- 4. Reload services: `sudo systemctl daemon-reload`
- 5. Enable service: `sudo systemctl enable logram`
- 6. Run service: `sudo systemctl start logram`
+## Systemd service
+1. Create link: `sudo ln -s /home/<user>/.cargo/bin/logram /usr/bin/logram`
+2. Copy config to `/etc/logram.yaml`
+3. Copy `logram.service` to `/etc/systemd/system`
+4. Reload services: `sudo systemctl daemon-reload`
+5. Enable service: `sudo systemctl enable logram`
+6. Run service: `sudo systemctl start logram`
+
+# Use logram as slog drain
+Logram implements `slog::Drain`, example usage:
+1. Import logram as library
+```toml
+[dependencies]
+slog = "2.0"
+logram = "0.2"
+```
+2. Use logram as drain
+```rust
+#[macro_use]
+extern crate slog;
+extern crate slog_logram;
+
+use slog::Drain;
+use slog_logram::{TelegramDrain, Config, Formats};
+
+
+fn main() {
+    // Telegram config
+    let config = Config {
+        // Bot token
+        token: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11".to_string(),
+        // Chat id
+        chat: 12345678,
+    };
+
+    // Message format can be changed
+    // Formats support Telegram HTML markup (core.telegram.org/bots/api#html-style)
+    let formats = Formats {
+        // Message format, variables: global_kv, record, record_kv
+        // Default: "{global_kv}\n\n{record}{record_kv}"
+        message: None,
+        // Record format, variables: msg, level, line, column, file, tag, module, function
+        // Default: "<b>{level} {file}:{line}</b>\n<pre>{msg}</pre>"
+        record: None,
+        // Values format, variables: key, val
+        // Default: "<b>{key}:</b> {val}"
+        kv: None,
+    };
+
+    let drain = TelegramDrain::new(config, formats).unwrap().fuse();
+    let root = slog::Logger::root(drain, o!("global_values" => "supported"));
+
+    info!(root, "hello, Telegram"; "log_values" => "also_supported");
+}
+```

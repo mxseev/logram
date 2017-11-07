@@ -1,14 +1,19 @@
-use reqwest::{self, Client};
+#![allow(dead_code)]
+
+use reqwest::Client;
 use url::Url;
 use serde_json;
-
-use config::TelegramConfig;
 
 mod error;
 mod message;
 pub use self::error::{TelegramError, ApiError};
-pub use self::message::{Message, MessageBody};
+pub use self::message::{Message, MessageBody, replace_html_entities};
 
+
+pub struct Config {
+    pub token: String,
+    pub chat: i64,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Response<T> {
@@ -36,16 +41,14 @@ pub type UpdatesResponse = Response<Vec<Update>>;
 
 #[derive(Clone)]
 pub struct Telegram {
-    client: Client,
     base_url: Url,
     default_chat: i64,
 }
 impl Telegram {
-    pub fn new(config: TelegramConfig) -> Result<Telegram, TelegramError> {
+    pub fn new(config: Config) -> Result<Telegram, TelegramError> {
         let url = format!("https://api.telegram.org/bot{}/", config.token);
 
         Ok(Telegram {
-            client: Client::new(),
             base_url: Url::parse(&url)?,
             default_chat: config.chat,
         })
@@ -60,9 +63,10 @@ impl Telegram {
         let mut url = self.base_url.join("sendMessage")?;
         url.query_pairs_mut().append_pair("text", &text);
         url.query_pairs_mut().append_pair("chat_id", &chat_id);
-        url.query_pairs_mut().append_pair("parse_mode", "markdown");
+        url.query_pairs_mut().append_pair("parse_mode", "html");
 
-        let response = self.client.post(url).send()?;
+        let client = Client::new();
+        let response = client.post(url).send()?;
         let response: SendMessageResponse = serde_json::from_reader(response)?;
         if !response.ok {
             return Err(TelegramError::Api(ApiError::from(response)));
@@ -70,6 +74,7 @@ impl Telegram {
 
         Ok(())
     }
+
     pub fn echo_id(token: String) -> Result<(), TelegramError> {
         let base_url = Url::parse(&format!("https://api.telegram.org/bot{}/", token))?;
         let mut last_update: Option<i64> = None;
@@ -87,7 +92,8 @@ impl Telegram {
                 url.query_pairs_mut().append_pair("offset", &offset);
             }
 
-            let response = reqwest::get(url.clone())?;
+            let client = Client::new();
+            let response = client.get(url.clone()).send()?;
             let response: UpdatesResponse = serde_json::from_reader(response)?;
             if !response.ok {
                 return Err(TelegramError::Api(ApiError::from(response)));

@@ -1,13 +1,19 @@
 [package]
 name = "logram"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Maxim Lis <ralvke@gmail.com>"]
 description = "Push logs updates to Telegram"
 repository = "https://github.com/Ralvke/logram"
 readme = "README.md"
-keywords = ["telegram", "bot"]
+keywords = ["telegram", "bot", "log", "slog"]
 license = "MIT"
-license-file = "LICENSE.md"
+
+[lib]
+name = "slog_logram"
+path = "src/slog.rs"
+
+[badges]
+travis-ci = { repository = "Ralvke/logram", branch = "master" }
 
 [dependencies]
 serde = "1.0"
@@ -18,3 +24,5 @@ reqwest = "0.8"
 url = "1.5"
 notify = "4.0"
 regex = "0.2"
+slog = "2.0"
+strfmt = "0.1"
