@@ -2,6 +2,7 @@ use std::fmt;
 
 
 pub enum MessageBody {
+    Started,
     Error { content: String },
     FileCreated { path: String },
     FileWrited { path: String, content: String },
@@ -11,6 +12,7 @@ pub enum MessageBody {
 impl MessageBody {
     fn replaced_entities(&self) -> MessageBody {
         match *self {
+            MessageBody::Started => MessageBody::Started,
             MessageBody::Error { ref content } => MessageBody::Error {
                 content: replace_html_entities(content),
             },
@@ -34,6 +36,7 @@ impl MessageBody {
 impl fmt::Display for MessageBody {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let message = match self.replaced_entities() {
+            MessageBody::Started => format!("<b>Started</b>"),
             MessageBody::Error { ref content } => {
                 format!("Error: <pre>{}</pre>\nLogram stopped", content)
             }

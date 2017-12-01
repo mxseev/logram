@@ -1,6 +1,6 @@
 [package]
 name = "logram"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Maxim Lis <ralvke@gmail.com>"]
 description = "Push logs updates to Telegram"
 repository = "https://github.com/Ralvke/logram"

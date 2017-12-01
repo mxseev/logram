@@ -37,6 +37,11 @@ fn init() -> Result<(), InitError> {
     let telegram = Telegram::new(config.telegram.into())?;
     let mut watcher = FileWatcher::new(config.watcher, telegram.clone())?;
 
+    telegram.send(Message {
+        chat: None,
+        body: MessageBody::Started,
+    })?;
+
     if let Err(e) = watcher.watch_files() {
         let message = Message {
             chat: None,
