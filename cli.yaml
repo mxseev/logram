@@ -1,0 +1,11 @@
+name: logram
+version: "1.0"
+author: Maxim Lisw <ralvke@gmail.com>
+about: Push log files updates to Telegram
+args:
+  - config:
+      short: c
+      long: config
+      value_name: FILE
+      help: Sets config file location
+      takes_value: true
