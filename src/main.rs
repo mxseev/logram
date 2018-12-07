@@ -7,7 +7,7 @@ mod config;
 mod source;
 use self::{
     config::Config,
-    source::{FsLogSource, LogSource},
+    source::{FsLogSource, JournaldLogSource, LogSource},
 };
 
 fn run() -> Result<(), Error> {
@@ -20,8 +20,12 @@ fn run() -> Result<(), Error> {
     let fs = FsLogSource::new(config.sources.fs)?;
     let fs_stream = fs.into_stream();
 
+    let journald = JournaldLogSource::new(config.sources.journald)?;
+    let journald_stream = journald.into_stream();
+
     let _ = stream::empty()
         .select(fs_stream)
+        .select(journald_stream)
         .for_each(|event| {
             println!("{:?}", event);
             Ok(())

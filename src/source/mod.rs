@@ -3,7 +3,8 @@ use futures::Stream;
 use std::fmt::Debug;
 
 mod fs;
-pub use self::fs::FsLogSource;
+mod journald;
+pub use self::{fs::FsLogSource, journald::JournaldLogSource};
 
 pub trait LogRecord: Debug + Send {
     fn into_message(self) -> String;

@@ -12,6 +12,7 @@ pub struct Config {
 #[serde(default)]
 pub struct LogSourcesConfig {
     pub fs: FsLogSourceConfig,
+    pub journald: JournaldLogSourceConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -23,6 +24,19 @@ impl Default for FsLogSourceConfig {
     fn default() -> Self {
         FsLogSourceConfig {
             entries: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct JournaldLogSourceConfig {
+    pub services: Vec<String>,
+}
+impl Default for JournaldLogSourceConfig {
+    fn default() -> Self {
+        JournaldLogSourceConfig {
+            services: Vec::new(),
         }
     }
 }
