@@ -11,7 +11,16 @@ pub enum FsEvent {
 }
 
 impl LogRecord for FsEvent {
-    fn into_message(self) -> String {
-        String::from("todo: format message")
+    fn to_message(&self) -> String {
+        match self {
+            FsEvent::Created { path } => format!("*{}* was created", path.display()),
+            FsEvent::Writed { path, new_content } => {
+                format!("*{}*```\n{}```", path.display(), new_content)
+            }
+            FsEvent::Removed { path } => format!("*{}* was removed", path.display()),
+            FsEvent::Renamed { from, to } => {
+                format!("*{}* renamed to *{}*", from.display(), to.display())
+            }
+        }
     }
 }

@@ -5,7 +5,15 @@ use std::fs::File;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
+    pub telegram: TelegramConfig,
     pub sources: LogSourcesConfig,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TelegramConfig {
+    pub token: String,
+    pub chat_id: String,
 }
 
 #[derive(Debug, Deserialize, Default)]

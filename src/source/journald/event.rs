@@ -18,7 +18,7 @@ impl From<JournalRecord> for JournaldEvent {
 }
 
 impl LogRecord for JournaldEvent {
-    fn into_message(self) -> String {
-        String::from("todo: format message")
+    fn to_message(&self) -> String {
+        format!("*{}*```\n{}```", self.service, self.message)
     }
 }
