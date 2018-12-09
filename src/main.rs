@@ -9,7 +9,7 @@ mod source;
 mod telegram;
 use self::{
     config::Config,
-    source::{FsLogSource, JournaldLogSource, LogSource},
+    source::{FsLogSource, JournaldLogSource, LogSource, LogSourceEvent},
     telegram::Telegram,
 };
 
@@ -38,11 +38,15 @@ fn run() -> Result<(), Error> {
     let main_loop = stream::empty()
         .select(fs_stream)
         .select(journald_stream)
-        .map(|event| event.to_message())
-        .for_each(move |message| {
+        .inspect(|event| {
+            if let LogSourceEvent::Error(error) = event {
+                eprintln!("Log source error: {}", error);
+            }
+        })
+        .for_each(move |event| {
             telegram
-                .send(&message)
-                .map_err(|error| println!("Error: {}", error))
+                .send(&event.to_message())
+                .map_err(|error| println!("Telegram error: {}", error))
         });
 
     tokio::run(main_loop);

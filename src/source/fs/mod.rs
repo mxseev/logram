@@ -92,18 +92,17 @@ impl FsLogSource {
 }
 
 impl LogSource for FsLogSource {
-    fn into_stream(self) -> Box<LogSourceStream> {
+    fn into_stream(mut self) -> Box<LogSourceStream> {
         let (mut tx, rx) = futures_mpsc::channel(10);
 
-        thread::spawn(move || {
-            let mut source = self;
+        thread::spawn(move || loop {
+            let event = match self.next_event() {
+                Ok(event) => LogSourceEvent::Record(Box::new(event)),
+                Err(error) => LogSourceEvent::Error(error),
+            };
 
-            loop {
-                let event = match source.next_event() {
-                    Ok(event) => LogSourceEvent::Record(Box::new(event)),
-                    Err(error) => LogSourceEvent::Error(error),
-                };
-                tx.try_send(event).unwrap();
+            if let Err(error) = tx.try_send(event) {
+                println!("Channel error: {}", error);
             }
         });
 

@@ -39,13 +39,11 @@ impl Default for FsLogSourceConfig {
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 pub struct JournaldLogSourceConfig {
-    pub services: Vec<String>,
+    pub units: Vec<String>,
 }
 impl Default for JournaldLogSourceConfig {
     fn default() -> Self {
-        JournaldLogSourceConfig {
-            services: Vec::new(),
-        }
+        JournaldLogSourceConfig { units: Vec::new() }
     }
 }
 

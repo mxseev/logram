@@ -20,8 +20,8 @@ impl JournaldLogSource {
         let mut journal = Journal::open(JournalFiles::All, false, true)?;
         journal.seek(JournalSeek::Tail)?;
 
-        for service in config.services {
-            journal.match_add("_SYSTEMD_UNIT", service)?;
+        for unit in config.units {
+            journal.match_add("_SYSTEMD_UNIT", unit)?;
             journal.match_or()?;
         }
 
@@ -40,19 +40,17 @@ impl JournaldLogSource {
 unsafe impl Send for JournaldLogSource {}
 
 impl LogSource for JournaldLogSource {
-    fn into_stream(self) -> Box<LogSourceStream> {
+    fn into_stream(mut self) -> Box<LogSourceStream> {
         let (mut tx, rx) = futures_mpsc::channel(10);
 
-        thread::spawn(move || {
-            let mut source = self;
+        thread::spawn(move || loop {
+            let event = match self.next_event() {
+                Ok(event) => LogSourceEvent::Record(Box::new(event)),
+                Err(error) => LogSourceEvent::Error(error),
+            };
 
-            loop {
-                let event = match source.next_event() {
-                    Ok(event) => LogSourceEvent::Record(Box::new(event)),
-                    Err(error) => LogSourceEvent::Error(error),
-                };
-
-                tx.try_send(event).unwrap();
+            if let Err(error) = tx.try_send(event) {
+                println!("Channel error: {}", error);
             }
         });
 

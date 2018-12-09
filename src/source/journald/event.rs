@@ -4,21 +4,21 @@ use crate::source::LogRecord;
 
 #[derive(Debug)]
 pub struct JournaldEvent {
-    service: String,
+    unit: String,
     message: String,
 }
 
 impl From<JournalRecord> for JournaldEvent {
     fn from(record: JournalRecord) -> Self {
-        let service = record.get("_SYSTEMD_UNIT").cloned().unwrap_or_default();
+        let unit = record.get("_SYSTEMD_UNIT").cloned().unwrap_or_default();
         let message = record.get("MESSAGE").cloned().unwrap_or_default();
 
-        JournaldEvent { service, message }
+        JournaldEvent { unit, message }
     }
 }
 
 impl LogRecord for JournaldEvent {
     fn to_message(&self) -> String {
-        format!("*{}*```\n{}```", self.service, self.message)
+        format!("*{}*```\n{}```", self.unit, self.message)
     }
 }
