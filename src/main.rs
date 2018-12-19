@@ -1,5 +1,7 @@
+#![recursion_limit = "128"]
+
 use clap::{load_yaml, App};
-use failure::Error;
+use failure::{err_msg, Error};
 use futures::{stream, Future, Stream};
 use std::process;
 use tokio;
@@ -17,12 +19,12 @@ fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
     let matches = App::from_yaml(cli).get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("echo_id") {
-        let token = matches.value_of("token").unwrap();
-        Telegram::echo_id(token)?;
+    // if let Some(matches) = matches.subcommand_matches("echo_id") {
+    //     let token = matches.value_of("token").unwrap();
+    //     Telegram::echo_id(token)?;
 
-        return Ok(());
-    }
+    //     return Ok(());
+    // }
 
     let config_filename = matches.value_of("config").unwrap_or("config.yaml");
     let config = Config::read(config_filename)?;
@@ -38,16 +40,14 @@ fn run() -> Result<(), Error> {
     let main_loop = stream::empty()
         .select(fs_stream)
         .select(journald_stream)
+        .map_err(|_| err_msg("stream error"))
         .inspect(|event| {
             if let LogSourceEvent::Error(error) = event {
                 eprintln!("Log source error: {}", error);
             }
         })
-        .for_each(move |event| {
-            telegram
-                .send(&event.to_message())
-                .map_err(|error| println!("Telegram error: {}", error))
-        });
+        .for_each(move |event| telegram.send(event))
+        .map_err(|error| eprintln!("Telegram error: {}", error));
 
     tokio::run(main_loop);
     Ok(())

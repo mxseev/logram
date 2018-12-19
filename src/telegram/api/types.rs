@@ -8,15 +8,15 @@ pub struct Response<T> {
     pub result: Option<T>,
 }
 impl<T> Response<T> {
-    pub fn into_result(self) -> Result<Option<T>, Error> {
+    pub fn into_result(self) -> Result<T, Error> {
         if self.ok {
-            Ok(self.result)
+            self.result.ok_or(err_msg("ok: true, but result is null"))
         } else {
-            let message = self
+            let description = self
                 .description
                 .unwrap_or_else(|| String::from("no description"));
 
-            Err(err_msg(message))
+            Err(err_msg(description))
         }
     }
 }
@@ -27,16 +27,13 @@ pub struct Chat {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TelegramMessage {
+pub struct Message {
+    pub message_id: i64,
     pub chat: Chat,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Update {
     pub update_id: i64,
-    pub message: TelegramMessage,
+    pub message: Message,
 }
-
-pub type SendMessageResponse = Response<TelegramMessage>;
-
-pub type UpdatesResponse = Response<Vec<Update>>;

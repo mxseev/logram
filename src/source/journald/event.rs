@@ -17,8 +17,11 @@ impl From<JournalRecord> for JournaldEvent {
     }
 }
 
-impl LogRecord for JournaldEvent {
-    fn to_message(&self) -> String {
-        format!("*{}*```\n{}```", self.unit, self.message)
+impl Into<LogRecord> for JournaldEvent {
+    fn into(self) -> LogRecord {
+        LogRecord {
+            title: Some(self.unit),
+            body: self.message,
+        }
     }
 }

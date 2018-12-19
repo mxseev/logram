@@ -10,17 +10,27 @@ pub enum FsEvent {
     Renamed { from: PathBuf, to: PathBuf },
 }
 
-impl LogRecord for FsEvent {
-    fn to_message(&self) -> String {
-        match self {
-            FsEvent::Created { path } => format!("*{}* was created", path.display()),
+impl Into<LogRecord> for FsEvent {
+    fn into(self) -> LogRecord {
+        let (title, body) = match self {
+            FsEvent::Created { path } => {
+                let body = format!("{} was created", path.display());
+                (None, body)
+            }
             FsEvent::Writed { path, new_content } => {
-                format!("*{}*```\n{}```", path.display(), new_content)
+                let title = path.display().to_string();
+                (Some(title), new_content)
             }
-            FsEvent::Removed { path } => format!("*{}* was removed", path.display()),
+            FsEvent::Removed { path } => {
+                let body = format!("{} was removed", path.display());
+                (None, body)
+            }
             FsEvent::Renamed { from, to } => {
-                format!("*{}* renamed to *{}*", from.display(), to.display())
+                let body = format!("{} renamed to {}", from.display(), to.display());
+                (None, body)
             }
-        }
+        };
+
+        LogRecord { title, body }
     }
 }

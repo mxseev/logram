@@ -45,7 +45,7 @@ impl LogSource for JournaldLogSource {
 
         thread::spawn(move || loop {
             let event = match self.next_event() {
-                Ok(event) => LogSourceEvent::Record(Box::new(event)),
+                Ok(event) => LogSourceEvent::Record(event.into()),
                 Err(error) => LogSourceEvent::Error(error),
             };
 

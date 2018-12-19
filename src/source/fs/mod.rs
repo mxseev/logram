@@ -97,7 +97,7 @@ impl LogSource for FsLogSource {
 
         thread::spawn(move || loop {
             let event = match self.next_event() {
-                Ok(event) => LogSourceEvent::Record(Box::new(event)),
+                Ok(event) => LogSourceEvent::Record(event.into()),
                 Err(error) => LogSourceEvent::Error(error),
             };
 

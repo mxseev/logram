@@ -1,70 +1,60 @@
 use failure::Error;
-use futures::Future;
-use reqwest::{r#async::Client as AsyncClient, Client};
-use std::{thread, time::Duration};
-use url::Url;
+use futures::{future::Either, Future};
+use std::sync::{Arc, Mutex};
 
-use crate::config::TelegramConfig;
+use crate::{config::TelegramConfig, source::LogSourceEvent};
 
-mod types;
-use self::types::{SendMessageResponse, UpdatesResponse};
+mod api;
+mod debounce;
+use self::{
+    api::TelegramApi,
+    debounce::{Debounce, Debouncer},
+};
 
 pub struct Telegram {
-    config: TelegramConfig,
-    client: AsyncClient,
-    base_url: Url,
+    api: TelegramApi,
+    chat_id: String,
+    debouncer: Arc<Mutex<Debouncer>>,
 }
 
 impl Telegram {
     pub fn new(config: TelegramConfig) -> Result<Self, Error> {
-        let client = AsyncClient::new();
-
-        let url = format!("https://api.telegram.org/bot{}/sendMessage", config.token);
-        let base_url = Url::parse(&url).unwrap();
+        let api = TelegramApi::new(&config.token)?;
+        let chat_id = config.chat_id;
+        let debouncer = Arc::new(Mutex::new(Debouncer::new()));
 
         Ok(Telegram {
-            config,
-            client,
-            base_url,
+            api,
+            chat_id,
+            debouncer,
         })
     }
-    pub fn send(&self, message: &str) -> impl Future<Item = (), Error = Error> {
-        let mut url = self.base_url.clone();
+    pub fn send(&self, event: LogSourceEvent) -> impl Future<Item = (), Error = Error> {
+        match event {
+            LogSourceEvent::Record(record) => {
+                let future = match self.debouncer.lock().unwrap().map_record(&record) {
+                    Debounce::SendNew { text } => {
+                        Either::A(self.api.send_message(&self.chat_id, &text))
+                    }
+                    Debounce::Update { message_id, text } => {
+                        Either::B(self.api.edit_message(&self.chat_id, message_id, &text))
+                    }
+                };
 
-        url.query_pairs_mut()
-            .append_pair("text", message)
-            .append_pair("chat_id", &self.config.chat_id)
-            .append_pair("parse_mode", "markdown");
+                let debouncer = self.debouncer.clone();
+                let future = future.and_then(move |message| {
+                    debouncer.lock().unwrap().add_debounce(record, &message);
+                    Ok(())
+                });
 
-        self.client
-            .post(url)
-            .send()
-            .and_then(|mut response| response.json::<SendMessageResponse>())
-            .map_err(Error::from)
-            .and_then(|response| response.into_result())
-            .map(|_| ())
-    }
-    pub fn echo_id(token: &str) -> Result<(), Error> {
-        let url = format!("https://api.telegram.org/bot{}/getUpdates", token);
-        let url = Url::parse(&url)?;
-        let client = Client::new();
-
-        let mut current_update_id = 0;
-
-        loop {
-            let mut url_clone = url.clone();
-            let offset = current_update_id.to_string();
-            url_clone.query_pairs_mut().append_pair("offset", &offset);
-
-            let response: UpdatesResponse = client.get(url_clone).send()?.json()?;
-            if let Some(updates) = response.into_result()? {
-                for update in updates {
-                    println!("[echo mode]: chat id = {}", update.message.chat.id);
-                    current_update_id = update.update_id + 1;
-                }
+                Either::A(future)
             }
+            LogSourceEvent::Error(error) => {
+                let text = format!("Error: {}", error);
+                let future = self.api.send_message(&self.chat_id, &text).map(|_| ());
 
-            thread::sleep(Duration::from_secs(1));
+                Either::B(future)
+            }
         }
     }
 }
