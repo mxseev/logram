@@ -34,3 +34,32 @@ sources:
 4. Reload services: `sudo systemctl daemon-reload`
 5. Enable service: `sudo systemctl enable logram`
 6. Run service: `sudo systemctl start logram`
+
+## Usage with `log`
+1. Load `logram` as library
+```toml
+logram = "1.1"
+```
+2. Init logram
+```rust
+use log::{debug, error, info, log, trace, warn, Level};
+use logram;
+
+fn main() {
+    logram::init(
+        "bot token".to_string(),
+        "chat id".to_string(),
+        Level::Error,
+    )
+    .unwrap();
+
+    trace!("trace");
+    debug!("debug");
+    info!("info");
+    warn!("warn");
+    error!("error");
+
+    log!(Level::Error, "Received errors: {}", "a");
+    log!(target: "app_events", Level::Warn, "App warning")
+}
+```
