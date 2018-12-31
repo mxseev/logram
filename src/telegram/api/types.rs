@@ -10,7 +10,8 @@ pub struct Response<T> {
 impl<T> Response<T> {
     pub fn into_result(self) -> Result<T, Error> {
         if self.ok {
-            self.result.ok_or(err_msg("ok: true, but result is null"))
+            self.result
+                .ok_or_else(|| err_msg("ok: true, but result is null"))
         } else {
             let description = self
                 .description

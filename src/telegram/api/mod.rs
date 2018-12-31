@@ -1,15 +1,14 @@
 use failure::Error;
 use futures::{
     future::{self, Either},
-    Future,
+    stream, Future, Stream,
 };
 use reqwest::r#async::Client as AsyncClient;
 use serde::Deserialize;
 use url::Url;
 
-mod types;
-pub use self::types::Message;
-use self::types::Response;
+pub mod types;
+use self::types::{Message, Response, Update};
 
 pub struct TelegramApi {
     client: AsyncClient,
@@ -49,6 +48,24 @@ impl TelegramApi {
 
         Either::A(fut)
     }
+    pub fn updates(self) -> impl Stream<Item = Vec<Update>, Error = Error> {
+        stream::unfold(0, move |last_update_id| {
+            Some(self.get_updates(last_update_id).and_then(move |updates| {
+                let last = updates
+                    .last()
+                    .map(|update| update.update_id + 1)
+                    .unwrap_or(last_update_id);
+
+                Ok((updates, last))
+            }))
+        })
+    }
+    pub fn get_updates(&self, offset: i64) -> impl Future<Item = Vec<Update>, Error = Error> {
+        let offset_str = format!("{}", offset);
+        let params = [("offset", offset_str.as_str()), ("timeout", "10")];
+
+        self.request("getUpdates", &params)
+    }
     pub fn send_message(
         &self,
         chat_id: &str,
@@ -61,22 +78,5 @@ impl TelegramApi {
         ];
 
         self.request("sendMessage", &params)
-    }
-    pub fn edit_message(
-        &self,
-        chat_id: &str,
-        message_id: i64,
-        text: &str,
-    ) -> impl Future<Item = Message, Error = Error> {
-        let message_id = message_id.to_string();
-
-        let params = [
-            ("text", text),
-            ("chat_id", chat_id),
-            ("message_id", message_id.as_str()),
-            ("parse_mode", "markdown"),
-        ];
-
-        self.request("editMessageText", &params)
     }
 }

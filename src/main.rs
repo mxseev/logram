@@ -19,12 +19,14 @@ fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
     let matches = App::from_yaml(cli).get_matches();
 
-    // if let Some(matches) = matches.subcommand_matches("echo_id") {
-    //     let token = matches.value_of("token").unwrap();
-    //     Telegram::echo_id(token)?;
+    if let Some(matches) = matches.subcommand_matches("echo_id") {
+        let token = matches.value_of("token").unwrap();
+        let future =
+            Telegram::echo_id(token).map_err(|error| eprintln!("Telegram error: {}", error));
+        tokio::run(future);
 
-    //     return Ok(());
-    // }
+        return Ok(());
+    }
 
     let config_filename = matches.value_of("config").unwrap_or("config.yaml");
     let config = Config::read(config_filename)?;
