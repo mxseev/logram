@@ -15,17 +15,21 @@ use self::{
     telegram::Telegram,
 };
 
+fn echo_id(token: Option<&str>) -> Result<(), Error> {
+    let token = token.ok_or_else(|| err_msg("cli parse error"))?;
+    let future = Telegram::echo_id(token).map_err(|error| eprintln!("Telegram error: {}", error));
+
+    tokio::run(future);
+    Ok(())
+}
+
 fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
     let matches = App::from_yaml(cli).get_matches();
 
     if let Some(matches) = matches.subcommand_matches("echo_id") {
-        let token = matches.value_of("token").unwrap();
-        let future =
-            Telegram::echo_id(token).map_err(|error| eprintln!("Telegram error: {}", error));
-        tokio::run(future);
-
-        return Ok(());
+        let token = matches.value_of("token");
+        return echo_id(token);
     }
 
     let config_filename = matches.value_of("config").unwrap_or("config.yaml");

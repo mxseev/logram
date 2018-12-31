@@ -49,20 +49,26 @@ impl TelegramApi {
         Either::A(fut)
     }
     pub fn updates(self) -> impl Stream<Item = Vec<Update>, Error = Error> {
-        stream::unfold(0, move |last_update_id| {
-            Some(self.get_updates(last_update_id).and_then(move |updates| {
-                let last = updates
+        stream::unfold(0, move |update_id| {
+            let future = self.get_updates(update_id).and_then(move |updates| {
+                let last_update_id = updates
                     .last()
                     .map(|update| update.update_id + 1)
-                    .unwrap_or(last_update_id);
+                    .unwrap_or(update_id);
 
-                Ok((updates, last))
-            }))
+                Ok((updates, last_update_id))
+            });
+
+            Some(future)
         })
     }
     pub fn get_updates(&self, offset: i64) -> impl Future<Item = Vec<Update>, Error = Error> {
-        let offset_str = format!("{}", offset);
-        let params = [("offset", offset_str.as_str()), ("timeout", "10")];
+        let offset_string = offset.to_string();
+        let params = [
+            ("offset", offset_string.as_str()),
+            ("allowed_updates", "[]"),
+            ("timeout", "10"),
+        ];
 
         self.request("getUpdates", &params)
     }

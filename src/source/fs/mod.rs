@@ -58,7 +58,11 @@ impl FsLogSource {
         match event {
             DebouncedEvent::Create(path) => Ok(Some(FsEvent::Created { path })),
             DebouncedEvent::Write(path) => {
-                let old_size = self.sizes.get(&path).cloned().unwrap_or(0);
+                let mut old_size = self.sizes.get(&path).cloned().unwrap_or(0);
+                let meta = path.metadata()?;
+                if meta.len() < old_size {
+                    old_size = 0;
+                }
 
                 let mut buffer = Vec::new();
                 let mut file = File::open(&path)?;

@@ -1,5 +1,8 @@
 use failure::Error;
-use futures::{Future, Stream};
+use futures::{
+    future::{self, Either},
+    stream, Future, Stream,
+};
 
 use crate::{config::TelegramConfig, source::LogSourceEvent};
 
@@ -19,16 +22,24 @@ impl Telegram {
         Ok(Telegram { api, chat_id })
     }
     pub fn echo_id(token: &str) -> impl Future<Item = (), Error = Error> {
-        let api = TelegramApi::new(token).unwrap();
-        api.updates().for_each(|updates| {
-            updates.into_iter().for_each(|update| {
+        let api = match TelegramApi::new(token) {
+            Ok(api) => api,
+            Err(error) => return Either::B(future::err(error)),
+        };
+
+        let updates_stream = api
+            .updates()
+            .map(stream::iter_ok)
+            .flatten()
+            .for_each(|update| {
                 println!(
                     "[echo id]: Received message from chat with id: {}",
                     update.message.chat.id
-                )
+                );
+                Ok(())
             });
-            Ok(())
-        })
+
+        Either::A(updates_stream)
     }
     pub fn send(&self, event: LogSourceEvent) -> impl Future<Item = (), Error = Error> {
         let text = match event {
