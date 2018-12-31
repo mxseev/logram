@@ -2,7 +2,7 @@
 name = "logram"
 version = "1.0.0"
 edition = "2018"
-authors = ["Maxim Lisw <ralvke@gmail.com>"]
+authors = ["Max Eliseev <ralvke@gmail.com>"]
 description = "Push logs updates to Telegram"
 repository = "https://github.com/Ralvke/logram"
 readme = "README.md"

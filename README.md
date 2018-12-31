@@ -4,12 +4,27 @@
 1. Install Rust via [Rustup](https://rustup.rs)
 2. Install logram: `cargo install logram`
 3. Create bot via [@BotFather](https://t.me/BotFather)
-4. Write config from example
-4. WIP
+4. Run logram in `echo id` mode: `logram echo_id --token=...`
+5. Send any message to bot and use chat id in config
+6. Write config from example
+7. Run logram `logram --config=...`
+8. Create systemd service if needed
 
 ## Config example
 ```yaml
+telegram:
+  chat_id: 12345678 # chat id
+  token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 # bot token
 
+sources:
+  fs: 
+    entries: # paths to watching files or dirs
+      - /tmp/log_file
+      
+  journald:
+    units: # names of systemd units for watching
+      - docker.service
+      - nginx.service
 ```
 
 ## Systemd service
