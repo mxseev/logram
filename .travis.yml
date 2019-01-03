@@ -1,3 +1,7 @@
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libsystemd-dev
+
 language: rust
 rust:
   - stable
