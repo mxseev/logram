@@ -38,6 +38,7 @@ sources:
 ## Usage with `log`
 1. Load `logram` as library
 ```toml
+[dependencies]
 logram = "1.1"
 ```
 2. Init logram
@@ -53,13 +54,7 @@ fn main() {
     )
     .unwrap();
 
-    trace!("trace");
-    debug!("debug");
-    info!("info");
-    warn!("warn");
     error!("error");
-
-    log!(Level::Error, "Received errors: {}", "a");
-    log!(target: "app_events", Level::Warn, "App warning")
 }
 ```
+Limitations: log records with target starts with `tokio_reactor, hyper, mio, want or reqwest` will be skipped, because [limitations in log](https://github.com/rust-lang-nursery/log/issues/312).

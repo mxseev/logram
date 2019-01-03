@@ -1,5 +1,5 @@
 use failure::{err_msg, Error};
-use log::{self, Level, LevelFilter, Log, Metadata, Record};
+use log::{self, Level, Log, Metadata, Record};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -21,6 +21,7 @@ impl TelegramLogger {
         }
     }
     pub fn send(&self, record: &Record) -> Result<(), Error> {
+        println!("{:?}", record.metadata().target());
         let text = TelegramLogger::format_message(record);
         let url = format!(
             "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}&parse_mode=html",
@@ -58,16 +59,21 @@ impl Log for TelegramLogger {
         metadata.level() <= self.level
     }
     fn log(&self, record: &Record) {
-        if !self.enabled(record.metadata()) {
+        let meta = record.metadata();
+        if !self.enabled(meta) {
             return;
         }
 
-        let current = log::max_level();
-        log::set_max_level(LevelFilter::Off);
+        let blacklist_targets = &["tokio_reactor", "hyper", "mio", "want", "reqwest"];
+        for target in blacklist_targets {
+            if meta.target().starts_with(target) {
+                return;
+            }
+        }
+
         if let Err(error) = self.send(record) {
             eprintln!("logram error: {}", error);
         }
-        log::set_max_level(current);
     }
     fn flush(&self) {}
 }
