@@ -21,7 +21,6 @@ impl TelegramLogger {
         }
     }
     pub fn send(&self, record: &Record) -> Result<(), Error> {
-        println!("{:?}", record.metadata().target());
         let text = TelegramLogger::format_message(record);
         let url = format!(
             "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}&parse_mode=html",
