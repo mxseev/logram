@@ -1,7 +1,6 @@
 name: logram
-version: "1.0"
-author: Maxim Lisw <ralvke@gmail.com>
-about: Push log files updates to Telegram
+author: Max Eliseev <ralvke@gmail.com>
+about: Pipe log updates to Telegram
 args:
   - config:
       short: c
@@ -12,7 +11,7 @@ args:
 
 subcommands:
   - echo_id:
-      about: get chat ids
+      about: Watch Telegram updates for obtain chat ids
       args:
         - token:
             short: t

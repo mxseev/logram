@@ -1,6 +1,6 @@
 #![recursion_limit = "128"]
 
-use clap::{load_yaml, App};
+use clap::{crate_version, load_yaml, App};
 use failure::{err_msg, Error};
 use futures::{stream, Future, Stream};
 use std::process;
@@ -25,7 +25,8 @@ fn echo_id(token: Option<&str>) -> Result<(), Error> {
 
 fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
-    let matches = App::from_yaml(cli).get_matches();
+    let app = App::from_yaml(cli).version(crate_version!());
+    let matches = app.get_matches();
 
     if let Some(matches) = matches.subcommand_matches("echo_id") {
         let token = matches.value_of("token");

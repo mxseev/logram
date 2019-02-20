@@ -1,4 +1,4 @@
-# logram - push logs updates to Telegram [![crates.io](https://img.shields.io/crates/v/logram.svg)](https://crates.io/crates/logram)
+# logram - pipe log updates to Telegram [![crates.io](https://img.shields.io/crates/v/logram.svg)](https://crates.io/crates/logram)
 
 ## Use
 1. Install Rust via [Rustup](https://rustup.rs)
