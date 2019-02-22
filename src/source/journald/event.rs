@@ -34,8 +34,8 @@ impl From<JournalRecord> for JournaldEvent {
 impl Into<LogRecord> for JournaldEvent {
     fn into(self) -> LogRecord {
         LogRecord {
-            title: Some(self.unit),
-            body: self.message,
+            title: self.unit,
+            body: Some(self.message),
         }
     }
 }

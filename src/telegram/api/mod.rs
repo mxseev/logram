@@ -85,4 +85,20 @@ impl TelegramApi {
 
         self.request("sendMessage", &params)
     }
+    pub fn edit_message(
+        &self,
+        chat_id: &str,
+        message_id: i64,
+        text: &str,
+    ) -> impl Future<Item = Message, Error = Error> {
+        let message_id = message_id.to_string();
+        let params = [
+            ("text", text),
+            ("chat_id", chat_id),
+            ("message_id", &message_id),
+            ("parse_mode", "markdown"),
+        ];
+
+        self.request("editMessageText", &params)
+    }
 }

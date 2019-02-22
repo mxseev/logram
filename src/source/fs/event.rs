@@ -14,20 +14,22 @@ impl Into<LogRecord> for FsEvent {
     fn into(self) -> LogRecord {
         let (title, body) = match self {
             FsEvent::Created { path } => {
-                let body = format!("{} was created", path.display());
-                (None, body)
+                let title = format!("{} was created", path.display());
+                (title, None)
             }
             FsEvent::Writed { path, new_content } => {
                 let title = path.display().to_string();
-                (Some(title), new_content)
+                let body = new_content;
+
+                (title, Some(body))
             }
             FsEvent::Removed { path } => {
-                let body = format!("{} was removed", path.display());
-                (None, body)
+                let title = format!("{} was removed", path.display());
+                (title, None)
             }
             FsEvent::Renamed { from, to } => {
-                let body = format!("{} renamed to {}", from.display(), to.display());
-                (None, body)
+                let title = format!("{} renamed to {}", from.display(), to.display());
+                (title, None)
             }
         };
 

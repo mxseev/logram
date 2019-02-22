@@ -5,11 +5,13 @@ mod fs;
 mod journald;
 pub use self::{fs::FsLogSource, journald::JournaldLogSource};
 
+#[derive(Debug)]
 pub struct LogRecord {
-    pub title: Option<String>,
-    pub body: String,
+    pub title: String,
+    pub body: Option<String>,
 }
 
+#[derive(Debug)]
 pub enum LogSourceEvent {
     Record(LogRecord),
     Error(Error),
