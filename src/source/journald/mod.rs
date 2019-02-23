@@ -27,13 +27,6 @@ impl JournaldLogSource {
 
         Ok(JournaldLogSource { journal })
     }
-    fn next_event(&mut self) -> Result<JournaldEvent, Error> {
-        if let Some(event) = self.journal.await_next_record(None)? {
-            return Ok(JournaldEvent::from(event));
-        }
-
-        self.next_event()
-    }
 }
 
 // www.freedesktop.org/software/systemd/man/sd-journal.html#Thread%20safety
@@ -41,16 +34,21 @@ unsafe impl Send for JournaldLogSource {}
 
 impl LogSource for JournaldLogSource {
     fn into_stream(mut self) -> Box<LogSourceStream> {
-        let (mut tx, rx) = futures_mpsc::channel(10);
+        let (tx, rx) = futures_mpsc::unbounded();
+        let tx_clone = tx.clone();
 
-        thread::spawn(move || loop {
-            let event = match self.next_event() {
-                Ok(event) => LogSourceEvent::Record(event.into()),
-                Err(error) => LogSourceEvent::Error(error),
-            };
+        let on_event = move |event| {
+            let event = JournaldEvent::from(event);
+            let event = LogSourceEvent::Record(event.into());
+            tx.unbounded_send(event).unwrap();
 
-            if let Err(error) = tx.try_send(event) {
-                println!("Channel error: {}", error);
+            Ok(())
+        };
+
+        thread::spawn(move || {
+            if let Err(error) = self.journal.watch_all_elements(on_event) {
+                let error = LogSourceEvent::Error(Error::from(error));
+                tx_clone.unbounded_send(error).unwrap();
             }
         });
 
