@@ -20,8 +20,8 @@ telegram:
   # logram will not send multiple messages, but simply change the last message.
   # debounce_timeout allows you to set a timeout after which logram will send a new message
   # (even if the headers are the same)
-  # default 10 seconds, use 0 to disable it
-  debounce_timeout: 10
+  # default 3 seconds, use 0 to disable it
+  debounce_timeout: 5
 
 sources:
   fs: 

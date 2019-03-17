@@ -10,7 +10,7 @@ pub struct Config {
 }
 
 fn debounce_timeout_default() -> u64 {
-    10
+    3
 }
 
 #[derive(Debug, Deserialize)]
