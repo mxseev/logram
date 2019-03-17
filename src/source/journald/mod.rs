@@ -1,15 +1,15 @@
 use failure::Error;
-use futures::sync::mpsc as futures_mpsc;
 use std::thread;
 use systemd::journal::{Journal, JournalFiles, JournalSeek};
 
 use crate::{
     config::JournaldLogSourceConfig,
-    source::{LogSource, LogSourceEvent, LogSourceStream},
+    source::{LogSource, LogSourceStream},
+    utils::result_channel,
 };
 
-mod event;
-use self::event::JournaldEvent;
+mod record;
+use self::record::map_record;
 
 pub struct JournaldLogSource {
     journal: Journal,
@@ -34,23 +34,24 @@ unsafe impl Send for JournaldLogSource {}
 
 impl LogSource for JournaldLogSource {
     fn into_stream(mut self) -> Box<LogSourceStream> {
-        let (tx, rx) = futures_mpsc::unbounded();
+        let (tx, rx) = result_channel();
         let tx_clone = tx.clone();
 
-        let on_event = move |event| {
-            let event = JournaldEvent::from(event);
-            let event = LogSourceEvent::Record(event.into());
-            tx.unbounded_send(event).unwrap();
+        let on_record = move |record| {
+            let record = map_record(record);
+            tx.unbounded_send(Ok(record)).unwrap();
 
             Ok(())
         };
 
-        thread::spawn(move || {
-            if let Err(error) = self.journal.watch_all_elements(on_event) {
-                let error = LogSourceEvent::Error(Error::from(error));
-                tx_clone.unbounded_send(error).unwrap();
+        let thread_task = move || {
+            if let Err(error) = self.journal.watch_all_elements(on_record) {
+                let error = Error::from(error);
+                tx_clone.unbounded_send(Err(error)).unwrap();
             }
-        });
+        };
+
+        thread::spawn(thread_task);
 
         Box::new(rx)
     }

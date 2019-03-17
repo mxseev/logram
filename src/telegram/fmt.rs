@@ -7,10 +7,7 @@ pub fn error(error: Error) -> String {
 }
 
 pub fn record(record: &LogRecord) -> String {
-    match &record.body {
-        Some(body) => format!("*{}*```\n{}```", record.title, body),
-        None => format!("*{}*", record.title),
-    }
+    format!("*{}*```\n{}```", record.title, record.body)
 }
 
 pub fn debounce(title: String, body: Vec<String>) -> String {

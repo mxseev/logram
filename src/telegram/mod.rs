@@ -5,7 +5,7 @@ use futures::{
 };
 use std::sync::{Arc, Mutex};
 
-use crate::{config::TelegramConfig, source::LogSourceEvent};
+use crate::{config::TelegramConfig, source::LogRecord};
 
 mod api;
 mod debouncer;
@@ -55,42 +55,35 @@ impl Telegram {
 
         Either::A(updates_stream)
     }
-    pub fn send(&self, event: LogSourceEvent) -> impl Future<Item = (), Error = Error> {
-        match event {
-            LogSourceEvent::Error(error) => {
-                let text = fmt::error(error);
-                let fut = self.api.send_message(&self.chat_id, &text).map(|_| ());
+    pub fn send_error(&self, error: Error) -> impl Future<Item = (), Error = Error> {
+        let text = fmt::error(error);
+
+        self.api.send_message(&self.chat_id, &text).map(|_| ())
+    }
+    pub fn send_record(&self, record: LogRecord) -> impl Future<Item = (), Error = Error> {
+        let debouncer = self.debouncer.lock().unwrap();
+
+        let fut = match debouncer.debounce(&record) {
+            Debounce::NewMessage(record) => {
+                let text = fmt::record(record);
+                let fut = self.api.send_message(&self.chat_id, &text);
 
                 Either::A(fut)
             }
-            LogSourceEvent::Record(record) => {
-                let debouncer = self.debouncer.lock().unwrap();
-
-                let fut = match debouncer.debounce(&record) {
-                    Debounce::NewMessage(record) => {
-                        let text = fmt::record(&record);
-                        let fut = self.api.send_message(&self.chat_id, &text);
-
-                        Either::A(fut)
-                    }
-                    Debounce::EditMessage { id, title, body } => {
-                        let text = fmt::debounce(title, body);
-                        let fut = self.api.edit_message(&self.chat_id, id, &text);
-
-                        Either::B(fut)
-                    }
-                };
-
-                let debouncer = self.debouncer.clone();
-                let fut = fut.and_then(move |msg| {
-                    let mut debouncer = debouncer.lock().unwrap();
-                    debouncer.on_message_sent(record, msg.message_id);
-
-                    Ok(())
-                });
+            Debounce::EditMessage { id, title, body } => {
+                let text = fmt::debounce(title, body);
+                let fut = self.api.edit_message(&self.chat_id, id, &text);
 
                 Either::B(fut)
             }
-        }
+        };
+
+        let debouncer = self.debouncer.clone();
+        fut.and_then(move |msg| {
+            let mut debouncer = debouncer.lock().unwrap();
+            debouncer.on_message_sent(record, msg.message_id);
+
+            Ok(())
+        })
     }
 }

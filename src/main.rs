@@ -2,16 +2,17 @@
 
 use clap::{crate_version, load_yaml, App};
 use failure::{err_msg, Error};
-use futures::{stream, Future, Stream};
+use futures::{future::Either, stream, Future, Stream};
 use std::process;
 use tokio;
 
 mod config;
 mod source;
 mod telegram;
+mod utils;
 use self::{
     config::Config,
-    source::{FsLogSource, JournaldLogSource, LogSource, LogSourceEvent},
+    source::{FsLogSource, JournaldLogSource, LogSource},
     telegram::Telegram,
 };
 
@@ -47,13 +48,11 @@ fn run() -> Result<(), Error> {
     let main_loop = stream::empty()
         .select(fs_stream)
         .select(journald_stream)
-        .map_err(|_| err_msg("stream error"))
-        .inspect(|event| {
-            if let LogSourceEvent::Error(error) = event {
-                eprintln!("Log source error: {}", error);
-            }
+        .then(move |result| match result {
+            Ok(record) => Either::A(telegram.send_record(record)),
+            Err(error) => Either::B(telegram.send_error(error)),
         })
-        .for_each(move |event| telegram.send(event))
+        .for_each(|_| Ok(()))
         .map_err(|error| eprintln!("Telegram error: {}", error));
 
     tokio::run(main_loop);
