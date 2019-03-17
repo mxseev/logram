@@ -25,6 +25,7 @@ impl<T> Response<T> {
 #[derive(Debug, Deserialize)]
 pub struct Chat {
     pub id: i64,
+    pub username: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

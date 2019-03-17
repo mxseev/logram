@@ -1,7 +1,7 @@
 use failure::Error;
 use futures::{
     future::{self, Either},
-    stream, Future, Stream,
+    Future,
 };
 use std::sync::{Arc, Mutex};
 
@@ -11,9 +11,10 @@ mod api;
 mod debouncer;
 mod fmt;
 use self::{
-    api::TelegramApi,
+    api::{types::Update, TelegramApi},
     debouncer::{Debounce, Debouncer},
 };
+pub use api::types;
 
 pub struct Telegram {
     api: TelegramApi,
@@ -35,25 +36,13 @@ impl Telegram {
             debouncer,
         })
     }
-    pub fn echo_id(token: &str) -> impl Future<Item = (), Error = Error> {
+    pub fn get_updates(token: &str) -> impl Future<Item = Vec<Update>, Error = Error> {
         let api = match TelegramApi::new(token) {
             Ok(api) => api,
             Err(error) => return Either::B(future::err(error)),
         };
 
-        let updates_stream = api
-            .updates()
-            .map(stream::iter_ok)
-            .flatten()
-            .for_each(|update| {
-                println!(
-                    "[echo id]: Received message from chat with id: {}",
-                    update.message.chat.id
-                );
-                Ok(())
-            });
-
-        Either::A(updates_stream)
+        Either::A(api.get_updates(-1))
     }
     pub fn send_error(&self, error: Error) -> impl Future<Item = (), Error = Error> {
         let text = fmt::error(error);

@@ -1,28 +1,22 @@
 #![recursion_limit = "128"]
 
 use clap::{crate_version, load_yaml, App};
-use failure::{err_msg, Error};
+use failure::Error;
 use futures::{future::Either, stream, Future, Stream};
 use std::process;
 use tokio;
 
 mod config;
+mod echo_id;
 mod source;
 mod telegram;
 mod utils;
 use self::{
     config::Config,
+    echo_id::echo_id,
     source::{FsLogSource, JournaldLogSource, LogSource},
     telegram::Telegram,
 };
-
-fn echo_id(token: Option<&str>) -> Result<(), Error> {
-    let token = token.ok_or_else(|| err_msg("cli parse error"))?;
-    let future = Telegram::echo_id(token).map_err(|error| eprintln!("Telegram error: {}", error));
-
-    tokio::run(future);
-    Ok(())
-}
 
 fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
