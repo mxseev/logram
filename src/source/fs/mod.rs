@@ -18,6 +18,8 @@ use crate::{
 };
 
 mod event;
+#[cfg(test)]
+mod test;
 use self::event::FsEvent;
 
 pub struct FsLogSource {

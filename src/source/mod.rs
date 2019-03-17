@@ -5,6 +5,7 @@ mod fs;
 mod journald;
 pub use self::{fs::FsLogSource, journald::JournaldLogSource};
 
+#[derive(Debug, PartialEq)]
 pub struct LogRecord {
     pub title: String,
     pub body: String,

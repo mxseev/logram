@@ -9,6 +9,8 @@ use crate::{
 };
 
 mod record;
+#[cfg(test)]
+mod test;
 use self::record::map_record;
 
 pub struct JournaldLogSource {

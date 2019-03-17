@@ -2,6 +2,9 @@ use std::time::{Duration, Instant};
 
 use crate::source::LogRecord;
 
+#[cfg(test)]
+mod test;
+
 struct LastMessage {
     id: i64,
     sent_at: Instant,
@@ -22,6 +25,7 @@ impl LastMessage {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Debounce<'a> {
     NewMessage(&'a LogRecord),
     EditMessage {
