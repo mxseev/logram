@@ -20,7 +20,7 @@ fn record(title: &str, body: &str) -> LogRecord {
 
 #[test]
 fn test() {
-    let base_path = env::temp_dir().join("/tmp/logram_test");
+    let base_path = env::temp_dir().join("logram_test");
     if base_path.exists() {
         fs::remove_dir_all(&base_path).unwrap();
     }
