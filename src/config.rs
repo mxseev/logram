@@ -9,17 +9,11 @@ pub struct Config {
     pub sources: LogSourcesConfig,
 }
 
-fn debounce_timeout_default() -> u64 {
-    3
-}
-
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TelegramConfig {
     pub token: String,
     pub chat_id: String,
-    #[serde(default = "debounce_timeout_default")]
-    pub debounce_timeout: u64,
 }
 
 #[derive(Debug, Deserialize, Default)]

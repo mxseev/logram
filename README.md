@@ -16,12 +16,6 @@
 telegram:
   chat_id: 12345678 # chat id
   token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 # bot token
-  # if several records appear with the same title at the same time
-  # logram will not send multiple messages, but simply change the last message.
-  # debounce_timeout allows you to set a timeout after which logram will send a new message
-  # (even if the headers are the same)
-  # default 3 seconds, use 0 to disable it
-  debounce_timeout: 5
 
 sources:
   fs: 

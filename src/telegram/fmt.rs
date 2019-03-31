@@ -9,7 +9,3 @@ pub fn error(error: Error) -> String {
 pub fn record(record: &LogRecord) -> String {
     format!("*{}*```\n{}```", record.title, record.body)
 }
-
-pub fn debounce(title: String, body: Vec<String>) -> String {
-    format!("*{}*```\n{}```", title, body.join("\n"))
-}
