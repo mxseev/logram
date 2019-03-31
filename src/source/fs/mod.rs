@@ -4,6 +4,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{Read, Seek, SeekFrom},
+    mem,
     path::PathBuf,
     sync::mpsc::{self, Receiver},
     thread,
@@ -22,7 +23,6 @@ use self::event::FsEvent;
 
 pub struct FsLogSource {
     sizes: HashMap<PathBuf, u64>,
-    _watcher: RecommendedWatcher,
     receiver: Receiver<DebouncedEvent>,
 }
 
@@ -48,11 +48,9 @@ impl FsLogSource {
             }
         }
 
-        Ok(FsLogSource {
-            sizes,
-            _watcher: watcher,
-            receiver,
-        })
+        mem::forget(watcher);
+
+        Ok(FsLogSource { sizes, receiver })
     }
     fn map_write_event(&mut self, path: PathBuf) -> Result<FsEvent, Error> {
         let mut old_size = self.sizes.get(&path).cloned().unwrap_or(0);

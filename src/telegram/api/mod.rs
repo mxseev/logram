@@ -19,8 +19,8 @@ impl TelegramApi {
     pub fn new(token: &str) -> Result<Self, Error> {
         let client = AsyncClient::new();
 
-        let url = format!("https://api.telegram.org/bot{}/", token);
-        let base_url = Url::parse(&url)?;
+        let base_url = format!("https://api.telegram.org/bot{}/", token);
+        let base_url = Url::parse(&base_url)?;
 
         Ok(TelegramApi { client, base_url })
     }

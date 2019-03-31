@@ -3,6 +3,17 @@ use log::{self, Level, Log, Metadata, Record};
 use reqwest::Client;
 use serde_json::Value;
 
+fn format_message(record: &Record) -> String {
+    let text = format!(
+        "<b>{}::{}</b><pre>{}</pre>",
+        record.level(),
+        record.target(),
+        record.args()
+    );
+
+    text
+}
+
 struct TelegramLogger {
     level: Level,
     token: String,
@@ -21,7 +32,7 @@ impl TelegramLogger {
         }
     }
     pub fn send(&self, record: &Record) -> Result<(), Error> {
-        let text = TelegramLogger::format_message(record);
+        let text = format_message(record);
         let url = format!(
             "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}&parse_mode=html",
             self.token, self.chat_id, text
@@ -40,16 +51,6 @@ impl TelegramLogger {
         }
 
         Ok(())
-    }
-    fn format_message(record: &Record) -> String {
-        let text = format!(
-            "<b>{}::{}</b><pre>{}</pre>",
-            record.level(),
-            record.target(),
-            record.args()
-        );
-
-        text
     }
 }
 

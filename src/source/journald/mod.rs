@@ -38,8 +38,9 @@ impl LogSource for JournaldLogSource {
         let tx_clone = tx.clone();
 
         let on_record = move |record| {
-            let record = map_record(record);
-            tx.unbounded_send(Ok(record)).unwrap();
+            if let Some(record) = map_record(record) {
+                tx.unbounded_send(Ok(record)).unwrap();
+            }
 
             Ok(())
         };
@@ -95,18 +96,13 @@ mod tests {
 
         let source = JournaldLogSource::new(config).unwrap();
         let mut stream = source.into_stream().wait();
+        let mut stream_next = || stream.next().unwrap().unwrap();
 
         send_log_record(vec![("MESSAGE", "logram test")]);
-        assert_eq!(
-            stream.next().unwrap().unwrap(),
-            record("user@1000.service", "logram test")
-        );
+        assert_eq!(stream_next(), record("user@1000.service", "logram test"));
 
         send_log_record(vec![("MESSAGE", "logram test 2")]);
-        assert_eq!(
-            stream.next().unwrap().unwrap(),
-            record("user@1000.service", "logram test 2")
-        );
+        assert_eq!(stream_next(), record("user@1000.service", "logram test 2"));
     }
 
 }

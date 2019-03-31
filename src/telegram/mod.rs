@@ -7,7 +7,7 @@ use futures::{
 use crate::{config::TelegramConfig, source::LogRecord};
 
 mod api;
-mod fmt;
+mod format;
 use self::api::{types::Update, TelegramApi};
 pub use api::types;
 
@@ -32,12 +32,12 @@ impl Telegram {
         Either::A(api.get_updates(-1))
     }
     pub fn send_error(&self, error: Error) -> impl Future<Item = (), Error = Error> {
-        let text = fmt::error(error);
+        let text = format::error(error);
 
         self.api.send_message(&self.chat_id, &text).map(|_| ())
     }
     pub fn send_record(&self, record: LogRecord) -> impl Future<Item = (), Error = Error> {
-        let text = fmt::record(&record);
+        let text = format::record(&record);
 
         self.api.send_message(&self.chat_id, &text).map(|_| ())
     }

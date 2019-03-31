@@ -1,24 +1,16 @@
-use lazy_static::lazy_static;
-use regex::Regex;
 use systemd::journal::JournalRecord;
 
-use crate::source::LogRecord;
+use crate::{
+    source::LogRecord,
+    utils::{crop_ansi_codes, option_zip},
+};
 
-fn crop_ansi_codes(input: String) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new("\x1b\\[[^@-~]*[@-~]").unwrap();
-    };
+pub fn map_record(record: JournalRecord) -> Option<LogRecord> {
+    let unit = record.get("_SYSTEMD_UNIT").cloned();
+    let message = record.get("MESSAGE");
 
-    RE.replace_all(&input, "").to_string()
-}
-
-pub fn map_record(record: JournalRecord) -> LogRecord {
-    let title = record.get("_SYSTEMD_UNIT").cloned().unwrap_or_default();
-    let body = record
-        .get("MESSAGE")
-        .cloned()
-        .map(crop_ansi_codes)
-        .unwrap_or_default();
-
-    LogRecord { title, body }
+    option_zip(unit, message).map(|(unit, message)| LogRecord {
+        title: unit,
+        body: crop_ansi_codes(message),
+    })
 }
