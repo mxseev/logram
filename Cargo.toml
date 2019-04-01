@@ -1,6 +1,6 @@
 [package]
 name = "logram"
-version = "1.1.2"
+version = "1.2.0"
 edition = "2018"
 authors = ["Max Eliseev <ralvke@gmail.com>"]
 description = "Pipe log updates to Telegram"
