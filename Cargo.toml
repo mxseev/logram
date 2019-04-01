@@ -33,3 +33,4 @@ url = "1.7"
 log = { version = "0.4", features = ["std"] }
 regex = "1.1"
 lazy_static = "1.2"
+tgbot = "0.3"

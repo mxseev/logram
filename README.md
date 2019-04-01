@@ -4,12 +4,11 @@
 1. Install Rust via [Rustup](https://rustup.rs)
 2. Install logram: `cargo install logram`
 3. Create bot via [@BotFather](https://t.me/BotFather)
-4. Send any message to bot
-5. Run logram in `echo id` mode: `logram echo_id --token=...`
-6. Use received chat id in config
-7. Write config from example
-8. Run logram `logram --config=...`
-9. Create systemd service if needed
+4. Run logram in `echo id` mode: `logram echo_id --token=...`
+5. Send any message to bot and he will answer chat id
+6. Write config from example
+7. Run logram `logram --config=...`
+8. Create systemd service if needed
 
 ## Config example
 ```yaml
