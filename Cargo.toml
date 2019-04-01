@@ -3,8 +3,8 @@ name = "logram"
 version = "1.1.2"
 edition = "2018"
 authors = ["Max Eliseev <ralvke@gmail.com>"]
-description = "Push logs updates to Telegram"
-repository = "https://github.com/Ralvke/logram"
+description = "Pipe log updates to Telegram"
+repository = "https://github.com/ralvke/logram"
 readme = "README.md"
 keywords = ["telegram", "bot", "log"]
 license = "MIT"
@@ -15,6 +15,16 @@ travis-ci = { repository = "Ralvke/logram", branch = "master" }
 [lib]
 name = "logram"
 path = "src/lib.rs"
+
+[package.metadata.deb]
+section = "utils"
+license-file = ["LICENSE", "2"]
+extended-description = "Pipe log updates to Telegram"
+assets = [
+  ["target/release/logram", "usr/bin/", "755"],
+  ["assets/config.sample.yaml", "etc/logram.yaml", "644"],
+  ["assets/logram.service", "lib/systemd/system/", "644"],
+]
 
 [dev-dependencies.cargo-husky]
 version = "1.3"

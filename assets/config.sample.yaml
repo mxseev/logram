@@ -1,0 +1,13 @@
+telegram:
+  chat_id: 12345678 # chat id
+  token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11 # bot token
+
+sources:
+  fs: 
+    entries: # paths to watching files or dirs
+      - /tmp/log_file
+      
+  journald:
+    units: # names of systemd units for watching
+      - docker.service
+      - nginx.service

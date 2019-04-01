@@ -1,10 +1,10 @@
 [Unit]
-Description = Push log files updates to Telegram
+Description = Pipe log updates to Telegram
 After = network.target
 
 [Service]
 Type = simple
-ExecStart = /usr/bin/logram /etc/logram.yaml
+ExecStart = /usr/bin/logram --config=/etc/logram.yaml
 Restart = always
 RestartSec = 30
 
