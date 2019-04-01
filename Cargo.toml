@@ -16,6 +16,9 @@ travis-ci = { repository = "Ralvke/logram", branch = "master" }
 name = "logram"
 path = "src/lib.rs"
 
+[dev-dependencies]
+cargo-husky = "1.3"
+
 [dependencies]
 clap = { version = "2.32", features = ["yaml"] }
 failure = "0.1"
