@@ -1,4 +1,5 @@
 # logram - pipe log updates to Telegram [![crates.io](https://img.shields.io/crates/v/logram.svg)](https://crates.io/crates/logram)
+Logram takes logs from files and systemd services and send them to Telegram.
 
 ## Usage
 1. Download the [latest release](https://github.com/Ralvke/logram/releases) and install it: `sudo dpkg -i logram_..._amd64.deb`
