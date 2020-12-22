@@ -1,51 +1,5 @@
 [package]
 name = "logram"
-version = "1.2.0"
-edition = "2018"
-authors = ["Max Eliseev <ralvke@gmail.com>"]
-description = "Pipe log updates to Telegram"
-repository = "https://github.com/ralvke/logram"
-readme = "README.md"
-keywords = ["telegram", "bot", "log"]
+version = "2.0.0"
+authors = ["Max Eliseev <seevmx@gmail.com>"]
 license = "MIT"
-
-[badges]
-travis-ci = { repository = "Ralvke/logram", branch = "master" }
-
-[lib]
-name = "logram"
-path = "src/lib.rs"
-
-[package.metadata.deb]
-section = "utils"
-license-file = ["LICENSE", "2"]
-extended-description = "Pipe log updates to Telegram"
-assets = [
-  ["target/release/logram", "usr/bin/", "755"],
-  ["assets/config.sample.yaml", "etc/logram.yaml", "644"],
-  ["assets/logram.service", "lib/systemd/system/", "644"],
-]
-
-[dev-dependencies.cargo-husky]
-version = "1.3"
-default-features = false
-features = ["precommit-hook", "run-cargo-test", "run-cargo-clippy"]
-
-[dependencies]
-clap = { version = "2.32", features = ["yaml"] }
-failure = "0.1"
-serde = "1.0"
-serde_derive = "1.0"
-serde_yaml = "0.8"
-serde_json = "1.0"
-futures = "0.1"
-tokio = "0.1"
-notify = "4.0"
-walkdir = "2.2"
-systemd = "0.4"
-reqwest = "0.9"
-url = "1.7"
-log = { version = "0.4", features = ["std"] }
-regex = "1.1"
-lazy_static = "1.2"
-tgbot = "0.3"
