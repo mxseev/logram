@@ -2,7 +2,7 @@
 name = "logram"
 version = "2.0.0"
 authors = ["Max Eliseev <seevmx@gmail.com>"]
-description = "Utility that takes logs from anywhere and sends them to Telegram."
+description = "Utility that takes logs from anywhere and sends them to Telegram"
 license = "MIT"
 edition = "2018"
 
@@ -12,7 +12,7 @@ clap = "2.33"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 teloxide = "0.3"
-tokio = { version =  "0.2", features = ["rt-threaded", "macros", "time"] }
+tokio = { version =  "0.2", features = ["rt-threaded", "macros", "time", "blocking"] }
 reqwest = "0.10"
 futures = "0.3"
 hostname = "0.3"

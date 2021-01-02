@@ -35,12 +35,11 @@ async fn main() -> Result<()> {
     let config = Config::from_file(config_path)?;
 
     let telegram = Telegram::new(config.telegram)?;
+    let mut sources_stream = source::init_log_sources(config.sources)?;
 
     if config.hello_message {
-        telegram.send_hello(&config.sources).await?;
+        telegram.send_hello().await?;
     }
-
-    let mut sources_stream = source::init_log_sources(config.sources)?;
 
     while let Some(result) = sources_stream.next().await {
         match result {

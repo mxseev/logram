@@ -1,20 +1,17 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LogRecord {
-    title: Option<String>,
-    body: String,
+    pub title: String,
+    pub body: String,
 }
 
 impl LogRecord {
     pub fn new(title: String, body: String) -> Self {
-        LogRecord {
-            title: Some(title),
-            body,
-        }
+        LogRecord { title, body }
     }
-    pub fn format(&self) -> String {
-        match &self.title {
-            Some(title) => format!("*{}*```\n{}```", title, self.body),
-            None => format!("```{}```", self.body),
+    pub fn only_title(title: String) -> Self {
+        LogRecord {
+            title,
+            body: String::new(),
         }
     }
 }
