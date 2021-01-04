@@ -2,8 +2,13 @@ use failure::Error;
 use futures::Stream;
 
 mod fs;
+#[cfg(feature = "journald-source")]
 mod journald;
-pub use self::{fs::FsLogSource, journald::JournaldLogSource};
+
+pub use self::fs::FsLogSource;
+
+#[cfg(feature = "journald-source")]
+pub use self::journald::JournaldLogSource;
 
 #[derive(Debug, PartialEq)]
 pub struct LogRecord {

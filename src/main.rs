@@ -14,8 +14,10 @@ mod utils;
 use self::{
     config::Config,
     echo_id::echo_id,
-    source::{FsLogSource, JournaldLogSource, LogSource},
+    source::{FsLogSource, LogSource},
 };
+#[cfg(feature = "journald-source")]
+use self::source::JournaldLogSource;
 
 fn run() -> Result<(), Error> {
     let cli = load_yaml!("../cli.yaml");
@@ -36,23 +38,30 @@ fn run() -> Result<(), Error> {
     let fs = FsLogSource::new(config.sources.fs)?;
     let fs_stream = fs.into_stream();
 
-    let journald = JournaldLogSource::new(config.sources.journald)?;
-    let journald_stream = journald.into_stream();
+    #[cfg(feature = "journald-source")]
+    let journald_stream = JournaldLogSource::new(config.sources.journald)?
+        .into_stream();
 
-    let main_loop = stream::empty()
-        .select(fs_stream)
-        .select(journald_stream)
-        .then(move |result| {
-            let text = match result {
-                Ok(record) => format!("*{}*```\n{}```", record.title, record.body),
-                Err(error) => format!("Error: {}", error),
-            };
+    let used_source_streams = {
+        let s = stream::empty();
+        let s = s.select(fs_stream);
 
-            Ok(text)
-        })
-        .map(move |text| SendMessage::new(chat_id.as_str(), text).parse_mode(ParseMode::Markdown))
-        .for_each(move |method| telegram.execute(&method).map(|_| ()))
-        .map_err(|error| eprintln!("Telegram error: {}", error));
+        #[cfg(feature = "journald-source")]
+        let s = s.select(journald_stream);
+        s
+    };
+
+    let main_loop = used_source_streams.then(move |result| {
+                let text = match result {
+                    Ok(record) => format!("*{}*```\n{}```", record.title, record.body),
+                    Err(error) => format!("Error: {}", error),
+                };
+
+                Ok(text)
+            })
+            .map(move |text| SendMessage::new(chat_id.as_str(), text).parse_mode(ParseMode::Markdown))
+            .for_each(move |method| telegram.execute(&method).map(|_| ()))
+            .map_err(|error| eprintln!("Telegram error: {}", error));
 
     tokio::run(main_loop);
     Ok(())
