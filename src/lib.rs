@@ -14,7 +14,7 @@ fn format_message(record: &Record) -> String {
     text
 }
 
-struct TelegramLogger {
+pub struct TelegramLogger {
     level: Level,
     token: String,
     chat_id: String,
