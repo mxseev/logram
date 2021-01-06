@@ -8,12 +8,14 @@ mod record;
 
 pub mod counter;
 pub mod filesystem;
+pub mod journald;
 
 pub use config::LogSourcesConfig;
 pub use record::LogRecord;
 
 use counter::CounterLogSource;
 use filesystem::FilesystemLogSource;
+use journald::JournaldLogSource;
 
 pub type LogSourceStream = Pin<Box<dyn Stream<Item = Result<LogRecord>>>>;
 
@@ -31,6 +33,11 @@ pub fn init_log_sources(config: LogSourcesConfig) -> Result<LogSourceStream> {
 
     if config.filesystem.enabled {
         let filesystem = FilesystemLogSource::new(config.filesystem.inner)?;
+        streams.push(filesystem.into_stream());
+    }
+
+    if config.journald.enabled {
+        let filesystem = JournaldLogSource::new(config.journald.inner)?;
         streams.push(filesystem.into_stream());
     }
 

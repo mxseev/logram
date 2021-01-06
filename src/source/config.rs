@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 use super::counter::CounterLogSourceConfig as CounterConfig;
 use super::filesystem::FilesystemLogSourceConfig as FilesystemConfig;
+use super::journald::JournaldLogSourceConfig as JournaldConfig;
 
 fn default_enabled() -> bool {
     false
@@ -28,4 +29,5 @@ impl<T: Default> Default for LogSourceConfig<T> {
 pub struct LogSourcesConfig {
     pub counter: LogSourceConfig<CounterConfig>,
     pub filesystem: LogSourceConfig<FilesystemConfig>,
+    pub journald: LogSourceConfig<JournaldConfig>,
 }

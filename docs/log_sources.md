@@ -21,3 +21,24 @@ filesystem:
     - /var/log/nginx
     - /var/log/cups/error_log
 ```
+
+## Journald
+Allows you to retrieve entries from the journald. Configurable with filters that match journald record entries. To view raw journald entries you can use `journalctl -f -o json-pretty`.
+
+```yaml
+journald:
+  enabled: true
+  matches:
+    - title: Kernel message # Title for telegram message
+      filters:
+        _TRANSPORT: kernel
+
+    - title: CUPS service
+      filters:
+        _SYSTEMD_UNIT: cups.service
+
+    - title: Audit sudo usage
+      filters:
+        _TRANSPORT: audit
+        AUDIT_FIELD_EXE: /usr/bin/sudo
+```
