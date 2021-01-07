@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 use super::counter::CounterLogSourceConfig as CounterConfig;
+use super::docker::DockerLogSourceConfig as DockerConfig;
 use super::filesystem::FilesystemLogSourceConfig as FilesystemConfig;
 use super::journald::JournaldLogSourceConfig as JournaldConfig;
 
@@ -30,4 +31,5 @@ pub struct LogSourcesConfig {
     pub counter: LogSourceConfig<CounterConfig>,
     pub filesystem: LogSourceConfig<FilesystemConfig>,
     pub journald: LogSourceConfig<JournaldConfig>,
+    pub docker: LogSourceConfig<DockerConfig>,
 }

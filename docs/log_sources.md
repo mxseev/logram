@@ -42,3 +42,14 @@ journald:
         _TRANSPORT: audit
         AUDIT_FIELD_EXE: /usr/bin/sudo
 ```
+
+## Docker
+Reads the logs from the docker.
+
+```yaml
+docker:
+  enabled: true
+  transport: local # connecting transport, supported values "local", "unix" and "http", default local
+  addr: "unix:///var/run/docker.sock" # address for connecting, default "unix:///var/run/docker.sock"
+  timeout: 10 # timeout of connecting, default 120
+```
