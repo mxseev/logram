@@ -31,8 +31,7 @@ impl CounterLogSource {
 
 impl LogSource for CounterLogSource {
     fn into_stream(self) -> LogSourceStream {
-        let counter = self;
-        let stream = stream::unfold(counter, |mut counter| async move {
+        let stream = stream::unfold(self, |mut counter| async move {
             let record = counter.next_record();
             delay_for(counter.interval).await;
 
@@ -40,5 +39,34 @@ impl LogSource for CounterLogSource {
         });
 
         Box::pin(stream)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use futures::StreamExt;
+
+    use crate::source::{LogRecord, LogSource};
+
+    use super::{CounterLogSource, CounterLogSourceConfig};
+
+    #[tokio::test]
+    async fn main() {
+        let config = CounterLogSourceConfig {
+            interval: 1,
+            initial: 42,
+        };
+
+        let source = CounterLogSource::new(config);
+        let stream = source.into_stream();
+
+        let actual: Vec<LogRecord> = stream.take(3).map(Result::unwrap).collect().await;
+        let expected: Vec<LogRecord> = vec![
+            LogRecord::new("Counter log source", "It's 42 record"),
+            LogRecord::new("Counter log source", "It's 43 record"),
+            LogRecord::new("Counter log source", "It's 44 record"),
+        ];
+
+        assert_eq!(actual, expected);
     }
 }

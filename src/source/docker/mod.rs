@@ -7,14 +7,13 @@ use bollard::{
 use chrono::Utc;
 use futures::{
     channel::mpsc::{self as futures_mpsc, SendError, Sender},
-    executor, future, Future, Stream, StreamExt,
+    future, Future, Stream, StreamExt,
 };
 
 use crate::source::{LogRecord, LogSource, LogSourceStream};
 
 mod config;
-pub use self::config::DockerLogSourceConfig;
-use self::config::Transport;
+pub use self::config::{DockerLogSourceConfig, Transport};
 
 type RecordSender = Sender<Result<LogRecord>>;
 
@@ -31,8 +30,6 @@ impl DockerLogSource {
             Transport::Unix => Docker::connect_with_unix(&config.addr, config.timeout, version)?,
             Transport::Http => Docker::connect_with_http(&config.addr, config.timeout, version)?,
         };
-
-        executor::block_on(docker.info())?;
 
         Ok(DockerLogSource { docker })
     }
@@ -119,7 +116,7 @@ fn container_name(event: SystemEventsResponse) -> Option<String> {
 
 fn entry_to_record(name: &str, body: LogOutput) -> LogRecord {
     let title = format!("{} container", name);
-    let body = format!("{}", body);
+    let body = body.to_string().trim_end_matches('\n').to_string();
 
     LogRecord::new(title, body)
 }
@@ -146,4 +143,73 @@ fn listen_logs(
         })
         .map(Ok)
         .forward(sender)
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+    use bollard::{
+        container::{
+            Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions,
+        },
+        Docker,
+    };
+    use futures::StreamExt;
+
+    use crate::source::{LogRecord, LogSource};
+
+    use super::{DockerLogSource, DockerLogSourceConfig, Transport};
+
+    #[tokio::test]
+    async fn main() {
+        let _ = delete_container().await;
+        create_container().await.unwrap();
+
+        let config = DockerLogSourceConfig {
+            transport: Transport::Local,
+            addr: String::from("unix:///var/run/docker.sock"),
+            timeout: 120,
+        };
+
+        let source = DockerLogSource::new(config).unwrap();
+        let stream = source.into_stream();
+
+        let actual: Vec<LogRecord> = stream.take(1).map(Result::unwrap).collect().await;
+        let expected: Vec<LogRecord> = vec![LogRecord::new("logram-test container", "log_entry")];
+
+        delete_container().await.unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    async fn create_container() -> Result<()> {
+        let docker = Docker::connect_with_local_defaults()?;
+
+        let options = Some(CreateContainerOptions {
+            name: "logram-test",
+        });
+        let config = Config {
+            image: Some("bash"),
+            cmd: Some(vec!["bash", "-c", "sleep 1 && echo log_entry"]),
+            ..Default::default()
+        };
+        docker.create_container(options, config).await?;
+
+        docker
+            .start_container("logram-test", None::<StartContainerOptions<String>>)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn delete_container() -> Result<()> {
+        let docker = Docker::connect_with_local_defaults()?;
+
+        let options = Some(RemoveContainerOptions {
+            force: true,
+            ..Default::default()
+        });
+        docker.remove_container("logram-test", options).await?;
+
+        Ok(())
+    }
 }

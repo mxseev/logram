@@ -5,8 +5,11 @@ pub struct LogRecord {
 }
 
 impl LogRecord {
-    pub fn new(title: String, body: String) -> Self {
-        LogRecord { title, body }
+    pub fn new<Ts: Into<String>, Bs: Into<String>>(title: Ts, body: Bs) -> Self {
+        LogRecord {
+            title: title.into(),
+            body: body.into(),
+        }
     }
     pub fn only_title(title: String) -> Self {
         LogRecord {

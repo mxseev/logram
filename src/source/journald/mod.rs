@@ -12,8 +12,7 @@ use systemd::journal::{Journal, JournalRecord, JournalSeek, OpenOptions};
 use crate::source::{LogRecord, LogSource, LogSourceStream};
 
 mod config;
-pub use self::config::JournaldLogSourceConfig;
-use self::config::MatchGroup;
+pub use self::config::{JournaldLogSourceConfig, MatchGroup};
 
 pub struct JournaldLogSource {
     receiver: Receiver<Result<LogRecord>>,
@@ -52,12 +51,8 @@ impl JournaldLogSourceInner {
         journal.seek(JournalSeek::Tail)?;
 
         for (matc, is_last) in with_last(config.matches.iter()) {
-            for ((key, value), is_last) in with_last(matc.filters.iter()) {
+            for (key, value) in &matc.filters {
                 journal.match_add(&key, value.clone())?;
-
-                if !is_last {
-                    journal.match_and()?;
-                }
             }
 
             if !is_last {
@@ -130,4 +125,68 @@ fn with_last<T, I: Iterator<Item = T>>(iter: I) -> impl Iterator<Item = (T, bool
 
         (t, is_last)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use futures::StreamExt;
+    use std::collections::HashMap;
+    use systemd::journal;
+
+    use crate::source::{LogRecord, LogSource};
+
+    use super::{JournaldLogSource, JournaldLogSourceConfig, MatchGroup};
+
+    #[tokio::test]
+    async fn main() {
+        let mut filters_a = HashMap::new();
+        filters_a.insert(String::from("A_FIELD1"), String::from("a_field1_value"));
+        filters_a.insert(String::from("A_FIELD2"), String::from("a_field2_value"));
+
+        let mut filters_b = HashMap::new();
+        filters_b.insert(String::from("B_FIELD1"), String::from("b_field1_value"));
+
+        let config = JournaldLogSourceConfig {
+            matches: vec![
+                MatchGroup {
+                    title: String::from("group a"),
+                    filters: filters_a,
+                },
+                MatchGroup {
+                    title: String::from("group b"),
+                    filters: filters_b,
+                },
+            ],
+        };
+
+        let source = JournaldLogSource::new(config).unwrap();
+        let stream = source.into_stream();
+
+        journal::send(&[
+            "A_FIELD1=a_field1_value",
+            "A_FIELD2=a_field2_value",
+            "MESSAGE=group_a message",
+            "PRIORITY=7",
+        ]);
+
+        journal::send(&[
+            "B_FIELD1=another_value",
+            "MESSAGE=this message should be ignored",
+            "PRIORITY=7",
+        ]);
+
+        journal::send(&[
+            "B_FIELD1=b_field1_value",
+            "MESSAGE=group_b message",
+            "PRIORITY=7",
+        ]);
+
+        let actual: Vec<LogRecord> = stream.take(2).map(Result::unwrap).collect().await;
+        let expected: Vec<LogRecord> = vec![
+            LogRecord::new("group a", "group_a message"),
+            LogRecord::new("group b", "group_b message"),
+        ];
+
+        assert_eq!(actual, expected);
+    }
 }

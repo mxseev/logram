@@ -52,7 +52,7 @@ impl FilesystemLogSource {
 
                 Ok(record)
             }
-            DebouncedEvent::Remove(path) => {
+            DebouncedEvent::Remove(path) | DebouncedEvent::NoticeRemove(path) => {
                 self.watcher.unwatch(&path)?;
 
                 let title = format!("{} was removed", path.to_string_lossy());
@@ -62,6 +62,7 @@ impl FilesystemLogSource {
             }
             DebouncedEvent::Rename(from, to) => {
                 self.reader.scan(to.clone())?;
+                self.watcher.unwatch(&from)?;
                 self.watcher.watch(&to, RecursiveMode::Recursive)?;
 
                 let (from, to) = (from.to_string_lossy(), to.to_string_lossy());
@@ -84,7 +85,7 @@ impl FilesystemLogSource {
 
 impl LogSource for FilesystemLogSource {
     fn into_stream(self) -> LogSourceStream {
-        let (tx, rx) = futures_mpsc::channel(1);
+        let (tx, rx) = futures_mpsc::channel(10);
 
         thread::spawn(move || {
             let mut tx = tx;
@@ -99,5 +100,67 @@ impl LogSource for FilesystemLogSource {
         });
 
         Box::pin(rx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use futures::StreamExt;
+    use std::{
+        env,
+        fs::{self, File},
+        io::Write,
+        thread,
+        time::Duration,
+    };
+
+    use crate::source::{LogRecord, LogSource};
+
+    use super::{FilesystemLogSource, FilesystemLogSourceConfig};
+
+    #[tokio::test]
+    async fn main() {
+        let base_path = env::temp_dir().join("logram_test");
+        if base_path.exists() {
+            fs::remove_dir_all(&base_path).unwrap();
+        }
+        fs::create_dir_all(&base_path).unwrap();
+
+        let dir_path = base_path.join("dir");
+        let file_a_path = base_path.join("file_a");
+        let file_b_path = base_path.join("file_b");
+        let file_c_path = dir_path.join("file_c");
+
+        let file_a_path_string = file_a_path.to_string_lossy().to_string();
+        let file_b_path_string = file_b_path.to_string_lossy().to_string();
+        let file_c_path_string = file_c_path.to_string_lossy().to_string();
+
+        fs::create_dir_all(&dir_path).unwrap();
+        let mut file_a = File::create(&file_a_path).unwrap();
+        let mut file_b = File::create(&file_b_path).unwrap();
+
+        let config = FilesystemLogSourceConfig {
+            delay: 100,
+            entries: vec![dir_path.clone(), file_a_path.clone(), file_b_path.clone()],
+        };
+
+        let source = FilesystemLogSource::new(config).unwrap();
+        let stream = source.into_stream();
+
+        let _ = file_a.write(b"file_a addition").unwrap();
+        let _ = file_b.write(b"file_b addition").unwrap();
+        let mut file_c = File::create(&file_c_path).unwrap();
+        thread::sleep(Duration::from_secs(1));
+        let _ = file_c.write(b"file_c addition").unwrap();
+
+        let actual: Vec<LogRecord> = stream.take(4).map(Result::unwrap).collect().await;
+        let expected: Vec<LogRecord> = vec![
+            LogRecord::new(&file_a_path_string, "file_a addition"),
+            LogRecord::new(&file_b_path_string, "file_b addition"),
+            LogRecord::new(&format!("{} was created", file_c_path_string), ""),
+            LogRecord::new(&file_c_path_string, "file_c addition"),
+        ];
+
+        assert_eq!(actual, expected);
     }
 }
