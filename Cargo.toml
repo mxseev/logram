@@ -6,6 +6,13 @@ description = "Utility that takes logs from anywhere and sends them to Telegram"
 license = "MIT"
 edition = "2018"
 
+[features]
+default = ["ls_counter", "ls_filesystem", "ls_journald", "ls_docker"]
+ls_counter = []
+ls_filesystem = ["notify"]
+ls_journald = ["systemd"]
+ls_docker = ["bollard"]
+
 [dependencies]
 anyhow = "1.0"
 clap = "2.33"
@@ -17,6 +24,8 @@ reqwest = "0.10"
 chrono = "0.4"
 futures = "0.3"
 hostname = "0.3"
-notify = "4.0"
-systemd = "0.8"
-bollard = "0.9"
+cfg-if = "1.0"
+
+notify = { version = "4.0", optional = true }
+systemd = { version = "0.8", optional = true }
+bollard = { version = "0.9", optional = true }
