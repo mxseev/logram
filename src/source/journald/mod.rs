@@ -21,7 +21,7 @@ pub struct JournaldLogSource {
 impl JournaldLogSource {
     pub fn new(config: JournaldLogSourceConfig) -> Result<Self> {
         let (init_tx, init_rx) = oneshot::channel();
-        let (record_tx, record_rx) = futures_mpsc::channel(1);
+        let (record_tx, record_rx) = futures_mpsc::channel(10);
 
         thread::spawn(move || run_inner(config, init_tx, record_tx));
 
@@ -48,7 +48,6 @@ struct JournaldLogSourceInner {
 impl JournaldLogSourceInner {
     fn new(config: JournaldLogSourceConfig) -> Result<Self> {
         let mut journal = OpenOptions::default().open()?;
-        journal.seek(JournalSeek::Tail)?;
 
         for (matc, is_last) in with_last(config.matches.iter()) {
             for (key, value) in &matc.filters {
@@ -59,6 +58,9 @@ impl JournaldLogSourceInner {
                 journal.match_or()?;
             }
         }
+
+        journal.seek_tail()?;
+        journal.seek(JournalSeek::Tail)?;
 
         Ok(JournaldLogSourceInner {
             journal,

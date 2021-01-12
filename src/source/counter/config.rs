@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct CounterLogSourceConfig {
     pub initial: i64,
     pub interval: u64,

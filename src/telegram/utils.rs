@@ -41,4 +41,6 @@ pub fn escape<S: Display>(text: S) -> String {
         .replace("-", "\\-")
         .replace("{", "\\{")
         .replace("}", "\\}")
+        .replace("(", "\\(")
+        .replace(")", "\\)")
 }

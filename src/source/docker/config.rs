@@ -9,6 +9,7 @@ pub enum Transport {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct DockerLogSourceConfig {
     pub transport: Transport,
     pub addr: String,

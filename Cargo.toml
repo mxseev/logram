@@ -25,7 +25,6 @@ chrono = "0.4"
 futures = "0.3"
 hostname = "0.3"
 cfg-if = "1.0"
-
 notify = { version = "4.0", optional = true }
 systemd = { version = "0.8", optional = true }
 bollard = { version = "0.9", optional = true }

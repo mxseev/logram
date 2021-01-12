@@ -8,6 +8,7 @@ pub struct MatchGroup {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct JournaldLogSourceConfig {
     pub matches: Vec<MatchGroup>,
 }

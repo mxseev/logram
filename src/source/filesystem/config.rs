@@ -2,6 +2,7 @@ use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct FilesystemLogSourceConfig {
     pub delay: u64,
     pub entries: Vec<PathBuf>,
