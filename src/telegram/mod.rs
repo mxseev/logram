@@ -1,5 +1,5 @@
 use anyhow::{Error, Result};
-use reqwest::{ClientBuilder, Proxy};
+use reqwest::{Client, Proxy};
 use std::time::Duration;
 use teloxide::{prelude::Request, requests::ResponseResult, types::ParseMode, Bot, BotBuilder};
 
@@ -18,7 +18,7 @@ pub struct Telegram {
 
 impl Telegram {
     pub fn new(config: TelegramConfig) -> Result<Self> {
-        let mut client = ClientBuilder::new()
+        let mut client = Client::builder()
             .connect_timeout(Duration::from_secs(30))
             .user_agent(USER_AGENT);
 
