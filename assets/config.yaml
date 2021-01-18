@@ -1,0 +1,24 @@
+hello_message: true
+
+telegram:
+  token: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+  chat_id: 12345678
+
+sources:
+  counter:
+    enabled: false
+    
+  filesystem:
+    enabled: false
+    entries:
+      - /var/log
+
+  journald:
+    enabled: false
+    matches:
+      - title: CUPS service
+        filters:
+          _SYSTEMD_UNIT: cups.service
+
+  docker:
+    enabled: false

@@ -4,6 +4,7 @@ version = "2.0.0"
 authors = ["Max Eliseev <seevmx@gmail.com>"]
 description = "Utility that takes logs from anywhere and sends them to Telegram"
 license = "MIT"
+readme = "README.md"
 edition = "2018"
 
 [features]
@@ -38,9 +39,31 @@ futures = { version = "0.3", optional = true }
 hostname = { version = "0.3", optional = true }
 cfg-if = { version = "1.0", optional = true }
 notify = { version = "4.0", optional = true }
-systemd = { version = "0.8", optional = true }
+systemd = { version = "0.7", optional = true }
 bollard = { version = "0.9", optional = true }
 
 # lib
 log = { version = "0.4", features = ["std"] }
 serde_json = { version = "1.0" }
+
+[package.metadata.deb]
+maintainer-scripts = "assets/scripts/"
+systemd-units = { enable = false, start = false }
+depends = "$auto"
+section = "utility"
+conf-files = ["/etc/logram.yaml"]
+features = ["bin_core", "ls_counter", "ls_filesystem", "ls_journald", "ls_docker"]
+assets = [
+  ["target/release/logram", "usr/bin/", "755"],
+  ["README.md", "usr/share/doc/logram/README", "644"],
+  ["assets/config.yaml", "etc/logram.yaml", "644"]
+]
+
+[package.metadata.generate-rpm]
+assets = [
+  { source = "target/release/logram", dest = "/usr/bin/logram", mode = "0755" },
+  { source = "assets/config.yaml", dest = "/etc/logram.yaml", config = true, mode = "0644" },
+  { source = "assets/scripts/logram.service", dest = "/lib/systemd/system/logram.service", mode = "0644" },
+  { source = "LICENSE", dest = "/usr/share/doc/logram/LICENSE", doc = true, mode = "0644" },
+  { source = "README.md", dest = "/usr/share/doc/logram/README.md", doc = true, mode = "0644" }
+]

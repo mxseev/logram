@@ -7,7 +7,7 @@ use futures::{
     executor,
 };
 use std::{iter::Iterator, thread};
-use systemd::journal::{Journal, JournalRecord, JournalSeek, OpenOptions};
+use systemd::journal::{Journal, JournalFiles, JournalRecord, JournalSeek};
 
 use crate::source::{LogRecord, LogSource, LogSourceStream};
 
@@ -47,7 +47,7 @@ struct JournaldLogSourceInner {
 
 impl JournaldLogSourceInner {
     fn new(config: JournaldLogSourceConfig) -> Result<Self> {
-        let mut journal = OpenOptions::default().open()?;
+        let mut journal = Journal::open(JournalFiles::All, false, true)?;
 
         for (matc, is_last) in with_last(config.matches.iter()) {
             for (key, value) in &matc.filters {
@@ -68,9 +68,12 @@ impl JournaldLogSourceInner {
         })
     }
     fn next_record(&mut self) -> Result<LogRecord> {
-        let record = match self.journal.await_next_entry(None)? {
+        let record = match self.journal.next_entry()? {
             Some(record) => record,
-            None => return self.next_record(),
+            None => {
+                self.journal.wait(None)?;
+                return self.next_record();
+            }
         };
 
         let title = self.find_title(&record);
@@ -115,7 +118,9 @@ fn run_inner(
 
     loop {
         let record = inner.next_record();
-        record_tx.try_send(record).unwrap();
+        if let Err(error) = record_tx.try_send(record) {
+            eprintln!("Error: {}", error);
+        }
     }
 }
 

@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "build-env"
-version = "0.3.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cf89846ef2b2674ef1c153256cec98fba587c72bf4ea2c4b2f6d91a19f55926"
+checksum = "e068f31938f954b695423ecaf756179597627d0828c0d3e48c0a722a8b23cf9e"
 
 [[package]]
 name = "bumpalo"
@@ -762,9 +762,9 @@ checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 
 [[package]]
 name = "libsystemd-sys"
-version = "0.8.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e03fd580bcecda68dcdcd5297085ade6a3dc552cd8b030d2b94a9b089ef7ab8"
+checksum = "a40ce9d49a59af3c54dff74749f1ab14684fe485cdae0c92bd6d71ea8544d0c5"
 dependencies = [
  "build-env",
  "libc",
@@ -1467,9 +1467,9 @@ dependencies = [
 
 [[package]]
 name = "systemd"
-version = "0.8.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f722cabda922e471742300045f56dbaa53fafbb4520fca304e51258019bfe91d"
+checksum = "954ca4554d4e42f566a6b6a159010c70dd328efcbdd0ee8b1d230cb4dba25af7"
 dependencies = [
  "cstr-argument",
  "foreign-types 0.5.0",

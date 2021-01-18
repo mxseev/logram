@@ -1,0 +1,12 @@
+[Unit]
+Description = Utility that takes logs from anywhere and sends them to Telegram
+After = network.target
+
+[Service]
+Type = simple
+ExecStart = /usr/bin/logram --config=/etc/logram.yaml
+Restart = always
+RestartSec = 30
+
+[Install]
+WantedBy = multi-user.target
