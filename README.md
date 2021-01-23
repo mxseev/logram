@@ -26,4 +26,15 @@ If you need to build a logram manually, do this:
     - `ls_docker` - Docker log source
 3. Build the project with these features: `cargo build --release --features=bin_core,ls_filesystem`
 
-Optionally you can build `.deb` package, for them install [`cargo-deb`](https://github.com/mmstick/cargo-deb), edit `package.metadata.deb.features` in `Cargo.toml`, build with `cargo deb` and use `target/debian/logram_..._amd64.deb`. Also you can build `.rpm` package with [`cargo-generate-rpm`](https://github.com/cat-in-136/cargo-generate-rpm): build project with `cargo build ...`, strip debug symbols with `strip -s target/release/logram`, build `.rpm` package with `cargo generate-rpm` and use `target/generate-rpm/logram-...x86_64.rpm`.
+### Making `.deb` package
+1. Install [`cargo-deb`](https://github.com/mmstick/cargo-deb)
+2. Edit `package.metadata.deb.features` in `Cargo.toml`
+3. Build package: `cargo deb`
+4. Use `target/debian/logram_..._amd64.deb`
+
+### Making `.rpm` package
+1. Install [`cargo-generate-rpm`](https://github.com/cat-in-136/cargo-generate-rpm)
+2. Build project: `cargo build --release --features=bin_core,...`
+3. Strip debug symbols: `strip -s target/release/logram`
+4. Build package: `cargo generate-rpm`
+5. Use `target/generate-rpm/logram-...x86_64.rpm`
